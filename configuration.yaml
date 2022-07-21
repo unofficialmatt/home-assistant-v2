@@ -1,3 +1,5 @@
+homeassistant:
+  packages: !include_dir_named packages
 
 # Loads default set of integrations. Do not remove.
 default_config:
@@ -6,9 +8,16 @@ default_config:
 tts:
   - platform: google_translate
 
-automation: !include automations.yaml
-script: !include scripts.yaml
-scene: !include scenes.yaml
-
 http:
   server_port: 9123
+  ip_ban_enabled: True
+  login_attempts_threshold: 15
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - !secret trusted_proxy_1
+    - !secret trusted_proxy_2
+
+history: !include inc/history.yaml
+logbook: !include inc/logbook.yaml
+logger:
+  default: error

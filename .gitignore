@@ -20,3 +20,6 @@ known_devices.yaml
 *.db*
 *.fault
 *.log*
+
+# HACS
+custom_components

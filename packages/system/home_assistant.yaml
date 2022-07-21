@@ -1,0 +1,15 @@
+homeassistant:
+  customize_glob:
+    "*version*":
+      icon: mdi:package-up
+
+sensor:
+  ## HA version
+  - platform: version
+    name: HASS Installed Version
+
+  ## HA available version
+  - platform: version
+    name: HASS Available Version
+    beta: false
+    source: hassio
