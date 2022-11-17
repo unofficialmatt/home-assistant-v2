@@ -1,0 +1,6 @@
+group:
+  occupants:
+    name: Occupants
+    entities:
+      - person.matt
+      - person.sarah

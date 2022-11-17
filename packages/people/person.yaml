@@ -9,6 +9,11 @@ person:
   - name: Matt
     id: matt
     user_id: 96aa57047c3140719ded88983083d576
+    device_trackers:
+      - device_tracker.matts_iphone_app
+
   - name: Sarah
     id: sarah
     user_id: a17a1b5a5d5c4bc0abe1b69c7f824259
+    device_trackers:
+      - device_tracker.sarahs_iphone_app
