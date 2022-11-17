@@ -9,13 +9,13 @@ tts:
   - platform: google_translate
 
 http:
-  server_port: 9123
-  ip_ban_enabled: True
+  ip_ban_enabled: true
   login_attempts_threshold: 15
   use_x_forwarded_for: true
   trusted_proxies:
     - !secret trusted_proxy_1
     - !secret trusted_proxy_2
+    - !secret trusted_proxy_3
 
 history: !include inc/history.yaml
 logbook: !include inc/logbook.yaml
