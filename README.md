@@ -14,11 +14,12 @@ A huge thank to the growing [Home Assistant Community](https://community.home-as
 
 ### Automations
 
+[Turn devices off when Home Status changes to 'Away'](https://github.com/unofficialmatt/home-assistant-v2/blob/master/packages/presence/home_status.yaml) - includes lights
 
 ## Downstairs rooms
 
-<table border="0" width="100%">
-<thead>
+<table style="width:100% !important">
+<thead style="text-align: left;">
 <tr>
 <th colspan="2" style="text-align:left">
 
@@ -44,35 +45,36 @@ A huge thank to the growing [Home Assistant Community](https://community.home-as
 <td width="40%">
 <details>
 <summary>Lights</summary>
-<ul style="margin-top:0.5em;">
-<li><a href="https://www.philips-hue.com/en-gb/p/hue-white-and-colour-ambiance-1-pack-e27/8719514328204">Philips Hue White and Color B22</a> in ceiling mounted pendant lights x 2</li>
-<li><a href="https://www.philips-hue.com/en-gb/p/hue-white-and-colour-ambiance-1-pack-e27/8719514328204">Philips Hue White and Color E14</a> in floor lamp</li>
-</ul>
+
+[Philips Hue White and Color B22](https://www.philips-hue.com/en-gb/p/hue-white-and-colour-ambiance-1-pack-e27/8719514328204) in ceiling mounted pendant lights x 2
+
+[Philips Hue White and Color E14](https://www.philips-hue.com/en-gb/p/hue-white-and-colour-ambiance-1-pack-e27/8719514328204) in floor lamp
+
 </details>
 <details>
 <summary>Switches</summary>
-<ul style="margin-top:0.5em;">
-<li><a href="https://www.philips-hue.com/en-gb/p/hue-dimmer-switch--latest-model-/8719514274617#overview">Philips Hue Dimmer Switch</a> installed over wallswitch with 3D printed mountplate</li>
-</ul>
+
+[Philips Hue Dimmer Switch](https://www.philips-hue.com/en-gb/p/hue-dimmer-switch--latest-model-/8719514274617#overview) installed over wallswitch with 3D printed mountplate
+
 </details>
 <details>
 <summary>Media</summary>
-<ul style="margin-top:0.5em;">
-<li><a href="https://mobiledirectonline.co.uk/product/google-home-smart-speaker/?attribute_pa_colours=white">Google Home Smart Speaker White</a></li>
-</ul>
+
+[Google Home Smart Speaker White](https://mobiledirectonline.co.uk/product/google-home-smart-speaker/?attribute_pa_colours=white)
+
 </details>
 </td>
 <td width="60%">
-<ul style="margin-top:0.5em;">
-<li>Dimmer Switch configured via Hue App</li>
-</ul>
+
+Dimmer Switch configured via Hue App
+
 </td>
 </tr>
 </tbody>
 </table>
 
-<table border="0" width="100%">
-<thead>
+<table style="width:100% !important">
+<thead style="text-align: left;">
 <tr>
 <th colspan="2" style="text-align:left">
 
@@ -98,24 +100,23 @@ A huge thank to the growing [Home Assistant Community](https://community.home-as
 <td width="40%">
 <details>
 <summary>Lights</summary>
-<ul style="margin-top:0.5em;">
-<li><a href="https://www.philips-hue.com/en-gb/p/hue-white-filament-1-pack-a60-b22-filament-standard/8718699688844">Philips Hue Filament Standard B22</a> in ceiling mounted pendant light</li>
-</ul>
+
+[Philips Hue Filament Standard B22](https://www.philips-hue.com/en-gb/p/hue-white-filament-1-pack-a60-b22-filament-standard/8718699688844) in ceiling mounted pendant light
+
 </details>
 <details>
 <summary>Sensors</summary>
-<ul style="margin-top:0.5em;">
-<li><a href="https://www.mi.com/global/product/mi-window-and-door-sensor/">Mi Window and Door Sensor</a> installed on door frame</li>
-</ul>
+
+[Mi Window and Door Sensor](https://www.mi.com/global/product/mi-window-and-door-sensor/) installed on door frame
+
 </details>
 </td>
 <td width="60%">
-<ul style="margin-top:0.5em;">
-<li>
-<a href="https://github.com/unofficialmatt/home-assistant-v2/blob/master/packages/lights/downstairs_toilet.yaml">Turn light on when the door is opened</a>
-</li>
-<li>
-<a href="https://github.com/unofficialmatt/home-assistant-v2/blob/master/packages/lights/downstairs_toilet.yaml">Turn light off when the room has been occupied, and the door is opened</a>
+
+[Turn light on when the door is opened](https://github.com/unofficialmatt/home-assistant-v2/blob/master/packages/lights/downstairs_toilet.yaml)
+
+[Turn light off when the room has been occupied, and the door is opened](https://github.com/unofficialmatt/home-assistant-v2/blob/master/packages/lights/downstairs_toilet.yaml)
+
 </li>
 </ul>
 </td>
