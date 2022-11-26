@@ -1,0 +1,86 @@
+automation:
+  - alias: Commute Notify Matt AM Get Ready
+    id: '1669016497'
+    description: Notifies Matt when it's time to start getting ready for work
+    trigger:
+      platform: time_pattern
+      minutes: /2
+    # variables:
+    #   eta: >
+    #     {% set waze_eta = (state_attr('sensor.travel_time_matt_commute_am', 'duration'))|round(0) %}
+    #     {% set waze_eta = waze_eta + 30 %}
+    #     {% set waze_eta = now() + timedelta(minutes=waze_eta) %}
+    #     {{ waze_eta }}
+    condition:
+      condition: and
+      conditions:
+        # 1. The automation has not run yet today
+        - "{{ state_attr(this.entity_id, 'last_triggered').date() < now().date() }}"
+        # 2. Matt is working in the office
+        - condition: state
+          entity_id: calendar.work_matt_in_office
+          state: "on"
+        # 3. Matt is at home
+        - condition: state
+          entity_id: person.matt
+          state: 'home'
+        # 4. The eta is more or less than 09:00
+        - condition: template
+          value_template: >
+            {% set waze_eta = (state_attr('sensor.travel_time_matt_commute_am', 'duration'))|round(0) %}
+            {% set waze_eta = waze_eta + 30 %}
+            {% set waze_eta = now() + timedelta(minutes=waze_eta) %}
+            {{ waze_eta >= today_at("09:00") }}
+        # 5. It's between 07:00 and 08:10
+        - condition: time
+          after: '07:00:00'
+          before: '08:10:00'
+    action:
+      - service: notify.mobile_app_matts_iphone
+        data_template:
+          title: It's time to get ready for work!
+          message: >
+            {% set waze_eta = (state_attr('sensor.travel_time_matt_commute_am', 'duration'))|round(0) %}
+            {% set waze_eta = waze_eta + 30 %}
+            {% set waze_eta = now() + timedelta(minutes=waze_eta) %}
+            Waze estimates a commute time of {{ states.sensor.travel_time_matt_commute_am.state }} minutes; your current ETA is {{ waze_eta.strftime('%I:%M%p') }}.
+          data:
+            push:
+              thread-id: "matt-commute"
+
+  - alias: Commute Notify Matt AM Time to Leave
+    id: '1668932775'
+    description: Sends Waze travel directions to Matt's iPhone when it's time to leave for work
+    trigger:
+      platform: time_pattern
+      minutes: /2
+    condition:
+      condition: and
+      conditions:
+        # 1. The automation has not run yet today
+        - "{{ state_attr(this.entity_id, 'last_triggered').date() < now().date() }}"
+        # 2. Matt is working in the office
+        - condition: state
+          entity_id: calendar.work_matt_in_office
+          state: "on"
+        # 3. Matt is at home
+        - condition: state
+          entity_id: person.matt
+          state: 'home'
+        # 4. The eta is more or less than 09:00
+        - condition: template
+          value_template: >
+            {% set waze_eta = (state_attr('sensor.travel_time_matt_commute_am', 'duration'))|round(0) %}
+            {% set waze_eta = waze_eta + 5 %}
+            {% set waze_eta = now() + timedelta(minutes=waze_eta) %}
+            {{ waze_eta >= today_at("09:00") }}
+    action:
+      - service: notify.mobile_app_matts_iphone
+        data_template:
+          title: It's time to leave for work!
+          message: >
+            Estimated commute time is {{ states('sensor.travel_time_matt_commute_am') }} minutes. Tap here for directions.
+          data:
+            url: waze://?favorite=work
+            push:
+              thread-id: matt-commute
