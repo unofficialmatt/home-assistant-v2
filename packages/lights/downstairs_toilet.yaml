@@ -1,0 +1,60 @@
+input_boolean:
+  downstairs_toilet_occupied:
+    name: Downstairs Toilet Occupied
+    initial: off
+
+automation:
+  - alias: Downstairs Toilet Occupied
+    id: '1669494320'
+    description: Turns on the downstairs toilet light if the door is opened
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.downstairs_toilet_door
+        to: "on"
+    # TODO: Condition so it only runs if light level is low enough
+    condition:
+      - condition: state
+        entity_id: input_boolean.downstairs_toilet_occupied
+        state: "off"
+    action:
+      - service: input_boolean.turn_on
+        entity_id: input_boolean.downstairs_toilet_occupied
+      - choose:
+          - conditions:
+              - condition: time
+                after: "20:00:00"
+                before: "08:00:00"
+            sequence:
+              - service: light.turn_on
+                entity_id: light.downstairs_toilet
+                data:
+                  brightness: 125
+          - conditions:
+              - condition: time
+                after: "08:00:00"
+                before: "20:00:00"
+            sequence:
+              - service: light.turn_on
+                entity_id: light.downstairs_toilet
+                data:
+                 brightness: 255
+
+  - alias: Downstairs Toilet Unoccupied
+    id: '1669495561'
+    description: Turns off the downstairs toilet light when the occupant leaves the room
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.downstairs_toilet_door
+        from: "off"
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: input_boolean.downstairs_toilet_occupied
+        state: "on"
+    action:
+      - service: input_boolean.turn_off
+        entity_id: input_boolean.downstairs_toilet_occupied
+      - service: light.turn_off
+        entity_id: light.downstairs_toilet
+        data:
+          transition: 10
