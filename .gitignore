@@ -23,3 +23,5 @@ known_devices.yaml
 
 # HACS
 custom_components
+www/community
+ui_lovelace_minimalist/

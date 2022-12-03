@@ -4,3 +4,12 @@ group:
     entities:
       - person.matt
       - person.sarah
+  friends:
+    name: Friends
+    entities:
+      - device_tracker.katts_phone
+  guests:
+    name: Guests
+    entities:
+      - group.friends
+      #- group.family

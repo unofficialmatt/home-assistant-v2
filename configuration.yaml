@@ -1,8 +1,31 @@
+##############################################################
+#
+#  This installation of Home Assistant uses a package-
+#  based configuration format, allowing easy grouping
+#  of related components into self-contained files.
+#  For more info on packages, see:
+#  https://www.home-assistant.io/docs/configuration/packages/
+#
+##############################################################
+
 homeassistant:
+  name: Home
+  temperature_unit: C
+  unit_system: metric
+  time_zone: Europe/London
+  external_url: !secret external_url
+  internal_url: !secret internal_url
+  latitude: !secret zone_home_latitude
+  longitude: !secret zone_home_longitude
+  elevation: !secret zone_home_elevation
   packages: !include_dir_named packages
 
 # Loads default set of integrations. Do not remove.
 default_config:
+
+recorder:
+  purge_keep_days: 7
+  db_url: !secret mariadb_url # Use MariaDB for the database
 
 # Text to speech
 tts:
@@ -17,7 +40,19 @@ http:
     - !secret trusted_proxy_2
     - !secret trusted_proxy_3
 
+automation: !include automations.yaml
+
 history: !include inc/history.yaml
 logbook: !include inc/logbook.yaml
+
 logger:
   default: error
+
+frontend:
+  themes: !include_dir_merge_named themes
+  extra_module_url:
+    - /hacsfiles/lovelace-card-mod/card-mod.js
+
+lovelace:
+  mode: yaml
+  resources: !include interface/resources.yaml
