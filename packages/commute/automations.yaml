@@ -84,3 +84,5 @@ automation:
             url: waze://?favorite=work
             push:
               thread-id: matt-commute
+
+# TODO: Notify at 5.30 if Matt in office

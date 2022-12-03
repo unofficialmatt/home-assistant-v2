@@ -1,0 +1,105 @@
+# lovelace_gen
+{% set lights = [ 'kitchen_1', 'kitchen_2','kitchen_3','kitchen_4' ] %}
+
+- title: Kitchen
+  path: kitchen
+  icon: mdi:fridge
+
+  cards:
+
+    - type: horizontal-stack
+      cards:
+        - !include ../chips/back.yaml
+        #- !include ../chips/presence.yaml
+        #- !include ../chips/wifi.yaml
+        # - !include ../chips/spotify.yaml
+        # - !include ../chips/temperature.yaml
+        # - !include ../chips/chance_of_rain.yaml
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          name: "Kitchen"
+          label: "Lights"
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+          {% for x in lights %}
+          - type: custom:button-card
+            template: card_light
+            entity: light.{{ x }}
+            variables:
+              ulm_card_light_enable_slider: true
+              ulm_card_light_enable_color: true
+              #ulm_card_light_force_background_color: true
+              ulm_card_light_enable_collapse: true
+              ulm_card_light_enable_popup: true
+          {% endfor %}
+
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: "Media Players"
+
+        # TODO: NOT SHOWING
+        - type: custom:button-card
+          template: card_media_player
+          entity: media_player.kitchen_speaker
+          variables:
+            ulm_card_media_player_enable_art: true
+            ulm_card_media_player_enable_controls: true
+            ulm_card_media_player_enable_volume_slider: true
+            ulm_card_media_player_enable_popup: true
+            ulm_card_media_player_collapsible: true
+            ulm_card_media_player_more_info: true
+
+
+        - type: custom:button-card
+          template: card_title
+          label: Environment
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            - type: custom:button-card
+              template: card_graph
+              entity: sensor.kitchen_sensor_temperature
+              variables:
+                ulm_card_graph_color: "var(--google-blue)"
+                ulm_card_graph_name: Temperature
+                ulm_card_graph_entity: sensor.kitchen_sensor_temperature
+
+            - type: custom:button-card
+              template: card_graph
+              entity: sensor.kitchen_sensor_illuminance
+              variables:
+                ulm_card_graph_color: "var(--google-yellow)"
+                ulm_card_graph_name: Light
+                ulm_card_graph_entity: sensor.kitchen_sensor_illuminance
+
+        - type: custom:button-card
+          template: card_title
+          label: Batteries
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            - type: custom:button-card
+              template: card_battery
+              entity: sensor.kitchen_sensor_battery
+              variables:
+                ulm_card_battery_name: Motion Sensor
+                ulm_card_battery_battery_level_danger: 10
+                ulm_card_battery_battery_level_warning: 30

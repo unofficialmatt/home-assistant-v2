@@ -1,0 +1,36 @@
+# lovelace_gen
+
+- title: Outdoors
+  path: outdoors
+  icon: mdi:tree
+
+  cards:
+
+    - type: horizontal-stack
+      cards:
+        - !include ../chips/back.yaml
+        #- !include ../chips/presence.yaml
+        #- !include ../chips/wifi.yaml
+        # - !include ../chips/spotify.yaml
+        # - !include ../chips/temperature.yaml
+        # - !include ../chips/chance_of_rain.yaml
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: Batteries
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            - type: custom:button-card
+              template: card_battery
+              entity: sensor.aarlo_battery_level_front_door
+              variables:
+                ulm_card_battery_name: Doorbell
+                ulm_card_battery_battery_level_danger: 10
+                ulm_card_battery_battery_level_warning: 30

@@ -1,0 +1,20 @@
+# Required by Minimalist UI
+# @see https://ui-lovelace-minimalist.netlify.app/installation/ui-mode
+- url: /hacsfiles/button-card/button-card.js
+  type: module
+- url: /hacsfiles/mini-graph-card/mini-graph-card-bundle.js
+  type: module
+- url: /hacsfiles/mini-media-player/mini-media-player-bundle.js
+  type: module
+- url: /hacsfiles/my-cards/my-cards.js
+  type: module
+- url: /hacsfiles/light-entity-card/light-entity-card.js
+  type: module
+- url: /hacsfiles/simple-weather-card/simple-weather-card-bundle.js
+  type: module
+- url: /hacsfiles/lovelace-auto-entities/auto-entities.js
+  type: module
+
+# Swipe Navigation
+- url: /hacsfiles/hass-swipe-navigation/swipe-navigation.js
+  type: module

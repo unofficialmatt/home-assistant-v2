@@ -1,0 +1,62 @@
+# lovelace_gen
+{% set lights = [ 'lounge_colour', 'lounge_floor_lamp','dining_room_colour' ] %}
+
+- title: Lounge
+  path: lounge
+  icon: mdi:sofa
+
+  cards:
+
+    - type: horizontal-stack
+      cards:
+        - !include ../chips/back.yaml
+        #- !include ../chips/presence.yaml
+        #- !include ../chips/wifi.yaml
+        # - !include ../chips/spotify.yaml
+        # - !include ../chips/temperature.yaml
+        # - !include ../chips/chance_of_rain.yaml
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          name: "Lounge & Diner"
+          label: "Lights"
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+          {% for x in lights %}
+          - type: custom:button-card
+            template: card_light
+            entity: light.{{ x }}
+            variables:
+              ulm_card_light_enable_slider: true
+              ulm_card_light_enable_color: true
+              #ulm_card_light_force_background_color: true
+              ulm_card_light_enable_collapse: true
+              ulm_card_light_enable_popup: true
+          {% endfor %}
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: Batteries
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            - type: custom:button-card
+              template: card_battery
+              entity: sensor.lounge_switch_battery
+              variables:
+                ulm_card_battery_name: Light Switch
+                ulm_card_battery_battery_level_danger: 10
+                ulm_card_battery_battery_level_warning: 30

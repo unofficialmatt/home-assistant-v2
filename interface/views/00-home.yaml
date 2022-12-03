@@ -1,0 +1,164 @@
+# lovelace_gen
+
+{% set xmas = [ 'star_lamp', 'fairy_lights', 'christmas_tree', 'christmas_window', 'christmas_wreath' ] %}
+
+# TODO: Conditional card which shows Matt's commute if he is Working in office, in morning show Morning, in PM show PM.
+
+- title: Home
+  path: home
+  icon: mdi:castle
+
+  cards:
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: "People"
+
+        - type: 'custom:button-card'
+          entity: sensor.matt_friendly_location
+          template:
+            - person_memoji
+          variables:
+            ulm_card_person_name: matt
+            ulm_card_person_proximity: proximity.matt_from_home
+            ulm_card_person_steps: sensor.matts_iphone_steps
+            ulm_card_person_distance_walked: sensor.matts_iphone_distance
+            ulm_card_person_phone_battery: sensor.matts_iphone_battery_level
+            # ulm_card_person_tablet_battery: sensor.matts_ipad_battery_level
+            #ulm_card_person_watch_battery: sensor.matts_apple_watch_battery
+            #ulm_card_person_laptop_battery: sensor.matts_mbp_internal_battery_level
+
+        - type: 'custom:button-card'
+          entity: sensor.sarah_friendly_location
+          template:
+            - person_memoji
+          variables:
+            ulm_card_person_name: sarah
+            ulm_card_person_proximity: proximity.sarah_from_home
+            ulm_card_person_steps: sensor.sarahs_iphone_steps
+            ulm_card_person_distance_walked: sensor.sarahs_iphone_distance
+            ulm_card_person_phone_battery: sensor.sarahs_iphone_battery_level
+            #ulm_card_person_tablet_battery: sensor.sarah_ipad_battery_level
+            #ulm_card_person_watch_battery: sensor.sarahs_apple_watch_battery
+
+    # TODO: Show memojies of guests present
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: "Rooms"
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            # TODO: Add all rooms here when they have lights
+
+            - type: 'custom:button-card'
+              template:
+                - room_mini
+              entity: light.lounge
+              name: Lounge
+              icon: mdi:sofa
+              variables:
+                ulm_card_room_mini_path: '/lovelace/lounge/'
+
+            - type: 'custom:button-card'
+              template:
+                - room_mini
+              entity: light.kitchen
+              name: Kitchen
+              icon: mdi:fridge
+              variables:
+                ulm_card_room_mini_path: '/lovelace/kitchen/'
+                ulm_card_room_mini_label_sensor: '[[[ return "Temp: " + states["sensor.kitchen_sensor_temperature"].state + "°C" ]]]'
+
+            - type: 'custom:button-card'
+              template:
+                - room_mini
+              entity: light.master_bedroom
+              name: Master Bedroom
+              icon: mdi:bed-queen
+              variables:
+                ulm_card_room_mini_path: '/lovelace/bedroom/'
+
+            - type: 'custom:button-card'
+              template:
+                - room_mini
+              entity: light.downstairs_toilet
+              name: Toilet
+              icon: mdi:toilet
+              variables:
+                ulm_card_room_mini_path: '/lovelace/toilet/'
+                # TODO: Return 'Occupied' or 'Unoccupied'
+                # ulm_card_room_mini_label_sensor: '[[[ return "Temp: " + states["sensor.downstairs_toilet_door_temperature"].state + "°C" ]]]'
+
+            - type: 'custom:button-card'
+              template:
+                - room_mini
+              entity: light.hallway
+              name: Hallways
+              icon: mdi:stairs
+              variables:
+                ulm_card_room_mini_path: '/lovelace/hallways/'
+
+    - type: vertical-stack
+      cards:
+
+        # TODO: Maybe move to this: https://github.com/twrecked/lovelace-hass-aarlo
+        - type: "custom:button-card"
+          entity: camera.aarlo_front_door
+          template: custom_card_camera
+          show_icon: true
+          variables:
+            ulm_custom_card_camera_title: true
+            ulm_custom_card_camera_name: Front Door
+            ulm_custom_card_camera_label: '[[[ return "Last Recording: " + states["sensor.aarlo_last_front_door"].state ]]]'
+
+    # CHRISTMAS
+    - type: vertical-stack
+      cards:
+
+        - type: conditional
+          conditions:
+            - entity: sensor.month
+              state: '12'
+          card:
+            type: vertical-stack
+            cards:
+
+            - type: custom:button-card
+              template: card_title
+              name: "Christmas"
+
+            - type: grid
+              columns: 2
+              square: false
+              cards:
+
+              {% for x in xmas %}
+              - type: custom:button-card
+                template: card_power_outlet
+                entity: switch.{{ x }}
+              {% endfor %}
+
+              - type: custom:button-card
+                template:
+                  - card_generic_swap
+                  - icon_info_bg
+                  - blue
+                entity: automation.christmas_lights_on_evening
+                name: On PM
+
+              - type: custom:button-card
+                template:
+                  - card_generic_swap
+                  - icon_info_bg
+                  - blue
+                entity: automation.christmas_lights_on_morning
+                name: On AM

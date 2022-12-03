@@ -1,0 +1,62 @@
+# lovelace_gen
+
+---
+
+# TODO: DESTURATE OFF ICON
+room_mini:
+  template:
+    - icon_info_bg
+  size: 20px
+  label: >-
+    [[[
+        if ( variables.ulm_card_room_mini_label_sensor) {
+            return variables.ulm_card_room_mini_label_sensor;
+        }
+        else if (entity.state !='unavailable'){
+          if (entity.state =='off'){
+            return 'Lights Off';
+          }
+          else {
+            var bri = Math.round(entity.attributes.brightness / 2.55);
+            return 'Lights: ' + (bri ? bri : '0') + '%';
+          }
+        }
+        else {
+          return "Unavailable";
+      }
+    ]]]
+  styles:
+    grid:
+      - grid-template-areas: '"i toggle" "n n" "l l"'
+      - grid-template-columns: 1fr 1fr
+      - grid-template-rows: min-content
+    img_cell:
+      - place-self: flex-start
+    name:
+      - margin-left: 6px
+      - margin-top: 12px
+    label:
+      - margin-left: 6px
+  custom_fields:
+    toggle:
+      card:
+        entity: '[[[ return entity.entity_id ]]]'
+        name: '[[[ return name ]]]'
+        state:
+          - value: 'on'
+            icon: 'mdi:lightbulb'
+            styles:
+              icon:
+                - color: 'rgba(var(--color-yellow),1)'
+              img_cell:
+                - background-color: 'rgba(var(--color-yellow), 0.2)'
+          - value: 'off'
+            icon: 'mdi:lightbulb-off'
+        tap_action:
+          action: toggle
+        type: 'custom:button-card'
+        template:
+          - widget_icon
+  tap_action:
+    action: navigate
+    navigation_path: "[[[ return variables.ulm_card_room_mini_path ]]]"
