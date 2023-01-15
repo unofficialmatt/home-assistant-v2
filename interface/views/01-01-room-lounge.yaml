@@ -45,6 +45,26 @@
               ulm_card_light_enable_popup: true
           {% endfor %}
 
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: "Media Players"
+
+        - type: custom:button-card
+          template: card_media_player
+          entity: media_player.lounge_speaker
+          variables:
+            ulm_card_media_player_name: Google Speaker
+            ulm_card_media_player_enable_art: true
+            ulm_card_media_player_enable_controls: true
+            ulm_card_media_player_enable_volume_slider: true
+            ulm_card_media_player_enable_popup: true
+            ulm_card_media_player_collapsible: true
+            ulm_card_media_player_more_info: true
+
     - type: vertical-stack
       cards:
 

@@ -1,5 +1,5 @@
 # lovelace_gen
-{% set lights = [ 'kitchen_1', 'kitchen_2','kitchen_3','kitchen_4' ] %}
+{% set lights = [ 'kitchen_1', 'kitchen_2','kitchen_3','kitchen_4','kitchen_5', 'kitchen_6','kitchen_7','kitchen_8', ] %}
 
 - title: Kitchen
   path: kitchen
@@ -55,11 +55,11 @@
           template: card_title
           label: "Media Players"
 
-        # TODO: NOT SHOWING
         - type: custom:button-card
           template: card_media_player
           entity: media_player.kitchen_speaker
           variables:
+            ulm_card_media_player_name: Google Speaker
             ulm_card_media_player_enable_art: true
             ulm_card_media_player_enable_controls: true
             ulm_card_media_player_enable_volume_slider: true

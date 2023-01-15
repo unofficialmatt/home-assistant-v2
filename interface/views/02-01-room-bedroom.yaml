@@ -1,5 +1,5 @@
 # lovelace_gen
-{% set lights = [ 'master_bedroom_colour' ] %}
+{% set lights = [ 'master_bedroom_colour','bedroom_headboard' ] %}
 
 - title: Bedroom
   path: bedroom
@@ -40,3 +40,38 @@
               ulm_card_light_enable_collapse: true
               ulm_card_light_enable_popup: true
           {% endfor %}
+
+
+        - type: custom:button-card
+          template: card_title
+          label: "Switches"
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+          - type: custom:button-card
+            template: card_power_outlet
+            variables:
+              ulm_card_power_outlet_icon: mdi:radiator
+            entity: switch.bed
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: "Media Players"
+
+        - type: custom:button-card
+          template: card_media_player
+          entity: media_player.master_bedroom_wifi
+          variables:
+            ulm_card_media_player_name: Google Speaker
+            ulm_card_media_player_enable_art: true
+            ulm_card_media_player_enable_controls: true
+            ulm_card_media_player_enable_volume_slider: true
+            ulm_card_media_player_enable_popup: true
+            ulm_card_media_player_collapsible: true
+            ulm_card_media_player_more_info: true
