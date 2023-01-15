@@ -1,0 +1,26 @@
+# lovelace_gen
+
+- title: Nook
+  path: nook
+  icon: mdi:rabbit
+
+  cards:
+    - type: horizontal-stack
+      cards:
+        - !include ../chips/back.yaml
+        - type: custom:button-card
+          template: chip_vacuum_room
+          variables:
+            ulm_card_segments: '["19"]'
+        #- !include ../chips/presence.yaml
+        #- !include ../chips/wifi.yaml
+        # - !include ../chips/spotify.yaml
+        # - !include ../chips/temperature.yaml
+        # - !include ../chips/chance_of_rain.yaml
+
+    - type: "custom:button-card"
+      template: card_vacuum
+      entity: vacuum.valetudo_roborock
+      variables:
+        ulm_card_vacuum_name: Robbie the Rover
+        ulm_card_vacuum_camera: camera.rockrobo_map

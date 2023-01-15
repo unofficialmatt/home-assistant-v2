@@ -10,6 +10,12 @@
     - type: horizontal-stack
       cards:
         - !include ../chips/back.yaml
+        - type: custom:button-card
+          template: chip_vacuum_room
+          variables:
+            ulm_card_segments: '["16"]'
+            ulm_card_iterations: '2'
+
         #- !include ../chips/presence.yaml
         #- !include ../chips/wifi.yaml
         # - !include ../chips/spotify.yaml

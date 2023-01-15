@@ -124,6 +124,46 @@
     - type: vertical-stack
       cards:
 
+        - type: "custom:button-card"
+          template: card_vacuum
+          entity: vacuum.valetudo_roborock
+          variables:
+            ulm_card_vacuum_name: Robbie the Rover
+            ulm_card_vacuum_camera: camera.rockrobo_map
+            ulm_card_vacuum_camera_toggle: true
+
+        - type: custom:auto-entities
+          card:
+            type: entities
+            state_color: true
+            title: Rooms to Vacuum
+          filter:
+            include:
+              - group: group.vacuum_rooms
+            exclude: []
+          show_empty: true
+          sort:
+            method: friendly_name
+            reverse: false
+            numeric: false
+        - type: custom:button-card
+          tap_action:
+            action: call-service
+            service: script.vacuum_clean_segments
+            # confirmation: true
+            service_data: {}
+            target: {}
+          lock:
+            enabled: >-
+              [[[return states['group.vacuum_rooms'].state !== 'on' ||
+              states['vacuum.valetudo_roborock'].state !== 'docked']]]
+            exemptions: []
+          entity: script.vacuum_clean_segments
+          name: Vacuum selected segments
+          show_state: false
+          show_icon: false
+
+
         - type: conditional
           conditions:
             - entity: sensor.month
@@ -145,6 +185,7 @@
               - type: custom:button-card
                 template: card_power_outlet
                 variables:
+                  ulm_card_power_outlet_icon: mdi:pine-tree
                 entity: switch.{{ x }}
               {% endfor %}
 
