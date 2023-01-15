@@ -1,0 +1,76 @@
+group:
+  christmas_switches:
+    name: Christmas Switches
+    entities:
+      # - switch.fairy_lights
+      # - switch.star_lamp
+      - switch.christmas_tree
+      - switch.christmas_wreath
+      - switch.christmas_window
+
+automation:
+  - alias: Christmas Lights - ON Evening
+    id: '1670396203'
+    description: Turns Christmas lights on in the evening
+    trigger:
+      - platform: state
+        entity_id: input_select.home_status
+        to: "Home"
+      - platform: sun
+        event: sunset
+        offset: "-01:30:00"
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: input_select.home_status
+          state: "Home"
+        - condition: sun
+          after: sunset
+          after_offset: "-01:30:00"
+    action:
+      - service: homeassistant.turn_on
+        entity_id: group.christmas_switches
+
+  - alias: Christmas Lights - ON Morning
+    id: '1670396218'
+    description: Turns Christmas lights on in the morning
+    trigger:
+      - platform: sun
+        event: sunrise
+        offset: "-01:00:00"
+    condition:
+      - condition: state
+        entity_id: input_select.home_status
+        state: "Home"
+    action:
+      - service: homeassistant.turn_on
+        entity_id: group.christmas_switches
+
+  - alias: Christmas Lights - OFF Morning
+    id: '1670396263'
+    description: Turns Christmas Lights off in the morning, if it's a workday
+    trigger:
+      - platform: time
+        at: '10:00:00'
+    condition:
+      condition: and
+      conditions:
+        - condition: time
+          after: '10:00:00'
+        - condition: state
+          entity_id: 'binary_sensor.workday_sensor'
+          state: 'on'
+    action:
+      - service: homeassistant.turn_off
+        entity_id: group.christmas_switches
+
+  - alias: Christmas Lights - OFF Bedtime
+    id: '1670396289'
+    description: Turns Christmas lights off at 11pm at night
+    trigger:
+      - platform: time
+        at: '23:00:00'
+    action:
+      - service: homeassistant.turn_off
+        entity_id: group.christmas_switches

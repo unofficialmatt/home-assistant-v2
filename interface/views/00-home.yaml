@@ -144,6 +144,7 @@
               {% for x in xmas %}
               - type: custom:button-card
                 template: card_power_outlet
+                variables:
                 entity: switch.{{ x }}
               {% endfor %}
 
