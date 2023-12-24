@@ -1,5 +1,0 @@
-sensor:
-  - platform: template
-    sensors:
-      month:
-        value_template: '{{ now().month }}'

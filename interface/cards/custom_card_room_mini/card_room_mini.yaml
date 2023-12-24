@@ -1,7 +1,5 @@
 # lovelace_gen
-
 ---
-
 # TODO: DESTURATE OFF ICON
 room_mini:
   template:
@@ -9,21 +7,52 @@ room_mini:
   size: 20px
   label: >-
     [[[
-        if ( variables.ulm_card_room_mini_label_sensor) {
-            return variables.ulm_card_room_mini_label_sensor;
+        let label = [];
+        var state = '';
+        var icon  = '';
+
+        if( variables.ulm_card_room_temperature_sensor) {
+          state = hass.states[variables.ulm_card_room_temperature_sensor].state;
+          state = `<span><ha-icon
+            icon="mdi:thermometer"
+            style="width: 12px; height: 12px; bottom: 1px; position: relative;">
+            </ha-icon>` + state + '°C</span>';
+          label.push(state);
         }
-        else if (entity.state !='unavailable'){
-          if (entity.state =='off'){
-            return 'Lights Off';
-          }
-          else {
-            var bri = Math.round(entity.attributes.brightness / 2.55);
-            return 'Lights: ' + (bri ? bri : '0') + '%';
-          }
+
+        if ( entity.state !='unavailable') {
+            if (entity.state =='off'){
+              state = 'Off';
+              icon = 'mdi:lightbulb-off';
+            }
+            else {
+              var bri = Math.round(entity.attributes.brightness / 2.55);
+              state = (bri ? bri : '0') + '%';
+              icon = 'mdi:lightbulb';
+            }
+            state = `<span><ha-icon
+            icon="${icon}"
+            style="width: 12px; height: 12px; bottom: 1px; position: relative;">
+            </ha-icon>` + state + '</span>';
+          label.push(state);
         }
-        else {
-          return "Unavailable";
-      }
+
+        if (variables.ulm_card_room_occupancy_sensor) {
+          var state = hass.states[variables.ulm_card_room_occupancy_sensor].state;
+
+          icon = (state == 'on' ? 'mdi:account' : 'mdi:account-off-outline');
+          state = (state == 'on' ? 'Occupied' : 'Unoccupied');
+          state = `<span><ha-icon
+            icon="${icon}"
+            style="width: 12px; height: 12px; bottom: 1px; position: relative;">
+            </ha-icon>` + state + '</span>';
+
+          label.push(state);
+        }
+
+        // Join all the pieces together and return
+        return label.join('');
+
     ]]]
   styles:
     grid:
@@ -35,26 +64,32 @@ room_mini:
     name:
       - margin-left: 6px
       - margin-top: 12px
+      - margin-bottom: 6px
     label:
       - margin-left: 6px
+      - white-space: normal
+      - text-align: left
+      - display: flex
+      - flex-wrap: wrap
+      - column-gap: 8px
   custom_fields:
     toggle:
       card:
-        entity: '[[[ return entity.entity_id ]]]'
-        name: '[[[ return name ]]]'
+        entity: "[[[ return entity.entity_id ]]]"
+        name: "[[[ return name ]]]"
         state:
-          - value: 'on'
-            icon: 'mdi:lightbulb'
+          - value: "on"
+            icon: "mdi:lightbulb"
             styles:
               icon:
-                - color: 'rgba(var(--color-yellow),1)'
+                - color: "rgba(var(--color-yellow),1)"
               img_cell:
-                - background-color: 'rgba(var(--color-yellow), 0.2)'
-          - value: 'off'
-            icon: 'mdi:lightbulb-off'
+                - background-color: "rgba(var(--color-yellow), 0.2)"
+          - value: "off"
+            icon: "mdi:lightbulb-off"
         tap_action:
           action: toggle
-        type: 'custom:button-card'
+        type: "custom:button-card"
         template:
           - widget_icon
   tap_action:

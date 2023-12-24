@@ -1,0 +1,34 @@
+binary_sensor:
+  # Time of Day
+  - platform: tod
+    name: Morning
+    after: sunrise
+    after_offset: "-02:00"
+    before: "12:00"
+    unique_id: morning_sensor
+  #- platform: tod
+  #  name: Afternoon
+  #  after: "12:00"
+  #  before: "17:00"
+  #  unique_id: afternoon_sensor
+  - platform: tod
+    name: Evening
+    after: "17:00"
+    before: "22:00"
+    unique_id: evening_sensor
+  #- platform: tod
+  #  name: Night
+  #  after: "22:00"
+  #  before: sunrise
+  #  before_offset: "-02:00"
+  #  unique_id: night_sensor
+
+sensor:
+  - platform: time_date
+    display_options:
+      - "time"
+      - "date"
+  - platform: template
+    sensors:
+      current_month:
+        value_template: "{{ now().month }}"

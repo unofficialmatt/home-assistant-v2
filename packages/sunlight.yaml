@@ -1,0 +1,50 @@
+sun:
+
+sensor:
+  ## COMPUTED LIGHT LEVEL
+  # @see https://community.home-assistant.io/t/virtual-light-sensor/31975/16
+  # @requires sun.sun
+  # @requires https://www.weatherbit.io sensor
+  - platform: template
+    sensors:
+      sunlight_pct:
+        friendly_name: "Percentage of Sunlight"
+        icon_template: mdi:brightness-auto
+        unit_of_measurement: "%"
+        value_template: |
+          {%- set factors = namespace(condition='',sun='') %}
+
+          {%- set irradiance = states('sensor.weatherbit_solar_radiation') | float %}
+          {%- set elevation = state_attr('sun.sun','elevation') | float %}
+          {%- set cloud_coverage = states('sensor.weatherbit_cloud_coverage') | float %}
+          {%- set current_condition = states("weather.weatherbit") %}
+
+          {%- set current_condition = current_condition|lower|replace("lightning-rainy","lightning")|replace("partly cloudy w/ ","")|replace("mostly cloudy w/ ","")|replace("freezing","")|replace("and","")|replace("-", " ")|replace("_", " ")|replace("(","")|replace(")","")|replace(" ", "") %}
+
+          {%- set condition_factors = {
+            "10000": ("clear", "clearnight", "sunny", "windy", "exceptional"),
+            "7500": ("partlycloudy","partlysunny", "mostlysunny", "mostlyclear", "hazy", "hazysunshine", "intermittentclouds"),
+            "2500": ("cloudy", "mostlycloudy"),
+            "500": ("fog", "rainy", "showers", "pouring", "snowy", "snowyheavy", "snowyrainy", "flurries", "chanceflurries", "chancerain", "chancesleet", "drearyovercast", "sleet"),
+            "50": ("hail", "lightning", "tstorms")
+          } %}
+          {%- for factor in condition_factors if current_condition in condition_factors[factor] %}
+            {%- set factors.condition = factor %}
+          {%- endfor %}
+
+          {%- set illuminance_pct = (factors.condition |int) / 100  %} {# max illuminance is 10.000, , so  illuminance/100 = pct #}
+          {%- set irradiance_pct = irradiance / 10 %} {# max irradiance = 1.000, so  irradiance/10 = pct. See https://en.wikipedia.org/wiki/Solar_irradiance#:~:text=Average%20annual%20solar%20radiation%20arriving,level%20on%20a%20clear%20day #}
+          {%- set adjusted_clouds = cloud_coverage -  irradiance_pct - illuminance_pct %}
+          {%- set adjusted_clouds = [adjusted_clouds,0.00000001] |max %} {# cannot devide by zero and exclude negative result #}
+          {%- set cloud_factor = (1 - (0.75 * ( adjusted_clouds / 100) ** 3 )) %}
+          {%- set min_elevation = -6 %}
+          {%- set max_elevation = 62.59 %} {# find max_elevation at https://www.suncalc.org/#}
+          {%- set adjusted_elevation = elevation - min_elevation %}
+          {%- set adjusted_elevation = [adjusted_elevation,0] | max %}
+          {%- set adjusted_elevation = [adjusted_elevation,max_elevation - min_elevation] | min %}
+          {%- set adjusted_elevation = adjusted_elevation / (max_elevation - min_elevation) %}
+          {%- set adjusted_elevation = adjusted_elevation %}
+          {%- set adjusted_elevation = adjusted_elevation * 100 %}
+          {%- set result = adjusted_elevation * cloud_factor %}
+          {%- set result = [result,100] |min %} {# max 100% #}
+          {{ result | round }}

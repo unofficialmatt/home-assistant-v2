@@ -1,0 +1,81 @@
+automation:
+  - alias: Kitchen - turn on lights
+    id: "1701243143"
+    description: "Turns on Kitchen Lights when motion is detected"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kitchen_occupancy
+        to: "on"
+        # TODO: Only if it's dark
+        # TODO: What if room is already occupied?
+    condition:
+      - condition: state
+        entity_id: light.kitchen
+        state: "off"
+    action:
+      - service: light.turn_on
+        entity_id: light.kitchen
+
+  - alias: Kitchen - turn off lights
+    id: "1701243144"
+    description: "Turns off Kitchen Lights when occupancy is no longer detected"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kitchen_occupancy
+        to: "off"
+        for:
+          minutes: 5
+    action:
+      - service: light.turn_off
+        entity_id: light.kitchen
+        data:
+          transition: 5
+
+  - alias: Kitchen - turn on radiator
+    id: "1701243145"
+    description: "Turns on Kitchen Radiator when occupancy is detected, with a temperature dependent on the time of day"
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: state
+        entity_id: binary_sensor.kitchen_occupancy
+        to: "on"
+    condition:
+      condition: and
+      conditions:
+        # 1. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.kitchen_occupancy
+          state: "on"
+        # 2. It's cold outside
+        # - condition: numeric_state
+        #   entity_id: sensor.weatherbit_apparent_temperature
+        #   below: 8
+        # 3. The temperature in the room is lower than the target temperature
+        - condition: template
+          value_template: "{{ states('sensor.kitchen_temperature') | float < states('sensor.room_target_temperature') | float - 0.5 }}"
+        # 4. The target temperature of the radiator does not already match the target temperature we want (prevents this automation running every 5 mins)
+        - condition: template
+          value_template: "{{ state_attr('climate.kitchen', 'temperature') | float != states('sensor.room_target_temperature') | float }}"
+    action:
+      - service: climate.set_temperature
+        data_template:
+          temperature: "{{ states('sensor.room_target_temperature') | int }}"
+        target:
+          entity_id: climate.kitchen
+
+  - alias: Kitchen - turn off radiator
+    id: "1701243146"
+    description: "Turns off Kitchen Radiator when occupancy is not detected for 10 minutes"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kitchen_occupancy
+        to: "off"
+        for:
+          minutes: 10
+    action:
+      - service: climate.set_temperature
+        data_template:
+          temperature: "{{ states('sensor.unoccupied_target_temperature') | int }}"
+        target:
+          entity_id: climate.kitchen

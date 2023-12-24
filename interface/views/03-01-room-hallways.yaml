@@ -9,7 +9,7 @@
 
     - type: horizontal-stack
       cards:
-        - !include ../chips/back.yaml
+        - !include ../chips/chip_back.yaml
         - type: custom:button-card
           template: chip_vacuum_room
           variables:

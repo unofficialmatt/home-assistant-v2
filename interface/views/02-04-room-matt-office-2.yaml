@@ -1,0 +1,206 @@
+# lovelace_gen
+{% set lights = [ 'man_cave_colour','man_cave_lamp', 'man_cave_cds' ] %}
+{% set switches = [ 'man_cave_power_bank', 'man_cave_power_bank_usbs', 'electric_piano', 'man_cave_monitor', 'man_cave_scent', 'man_cave_standing_desk' ] %}
+{% set batteries = [ 'man_cave_radiator_battery_level' ] %}
+
+# TODO: ADD IN SCENE SELECTOR
+
+- title: Matt's Office GRID
+  path: matt-office-grid
+  type: custom:grid-layout
+  icon: mdi:laptop
+  layout:
+    grid-template-columns: 1fr 1fr 1fr
+    grid-template-rows: auto
+    grid-gap: 12px
+    margin: 12px
+    grid-template-areas: |
+      "header chips chips"
+      "col1 col2 col3"
+    mediaquery:
+      "(max-width: 600px)":
+        grid-template-columns: 100%
+        grid-template-areas: |
+          "header"
+          "chips"
+          "col1"
+          "col2"
+          "col3"
+      "(max-width: 800px)":
+        grid-template-columns: 50% 50%
+        grid-template-areas: |
+          "header chips"
+          "col1 col2"
+          "col3 col3"
+  cards:
+    - type: custom:mod-card
+      view_layout:
+        grid-area: header
+      style:
+        hui-horizontal-stack-card$: |
+          #root {
+            align-items: center;
+          }
+      card:
+        type: horizontal-stack
+        cards:
+          - !include ../chips/chip_back.yaml
+          - type: custom:button-card
+            template: card_view_title
+            name: "Man Cave"
+
+    # GRID AREA CHIPS
+    - type: custom:mod-card
+      view_layout:
+        grid-area: chips
+      style:
+        hui-horizontal-stack-card$: |
+          #root {
+            justify-content: flex-end;
+          }
+          @media screen and (max-width: 600px) {
+            #root {
+              justify-content: flex-start;
+            }
+          }
+      card:
+        type: horizontal-stack
+        cards:
+          - type: "custom:button-card"
+            template: chip_occupancy
+            entity: binary_sensor.man_cave_occupancy
+          #- !include ../chips/presence.yaml
+          #- !include ../chips/wifi.yaml
+          # - !include ../chips/spotify.yaml
+          # - !include ../chips/temperature.yaml
+          # - !include ../chips/chance_of_rain.yaml
+
+    # GRID AREA COL1
+    - type: vertical-stack
+      view_layout:
+        grid-area: col1
+      cards:
+
+        - type: custom:button-card
+          template: card_subtitle
+          name: "Lights"
+          variables:
+            ulm_card_icon: mdi:lightbulb-on-outline
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+          {% for x in lights %}
+          - type: custom:button-card
+            template: card_light
+            entity: light.{{ x }}
+            variables:
+              ulm_card_light_enable_slider: true
+              ulm_card_light_enable_color: true
+              #ulm_card_light_force_background_color: true
+              ulm_card_light_enable_collapse: true
+              ulm_card_light_enable_popup: true
+          {% endfor %}
+
+
+    # GRID AREA COL2
+    - type: vertical-stack
+      view_layout:
+        grid-area: col2
+      cards:
+
+        - type: custom:button-card
+          template: card_subtitle
+          name: "Heating"
+          variables:
+            ulm_card_icon: mdi:radiator
+
+        - type: "custom:button-card"
+          template: card_climate
+          entity: climate.man_cave
+          variables:
+            ulm_card_thermostat_name: "Radiator"
+
+        - type: custom:button-card
+          template: card_subtitle
+          name: "Switches"
+          variables:
+            ulm_card_icon: mdi:power-socket-uk
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+          {% for x in switches %}
+          - type: custom:button-card
+            template: card_power_outlet
+            entity: switch.{{ x }}
+          {% endfor %}
+
+          - type: custom:button-card
+            template: card_power_outlet
+            variables:
+              ulm_card_power_outlet_icon: mdi:printer-3d
+              ulm_card_power_outlet_consumption_sensor: sensor.3d_printer_power
+            entity: switch.3d_printer
+
+    # GRID AREA COL3
+    - type: vertical-stack
+      view_layout:
+        grid-area: col3
+      cards:
+
+        - type: custom:button-card
+          template: card_subtitle
+          name: "Settings"
+          variables:
+            ulm_card_icon: mdi:cog-outline
+
+        - type: custom:button-card
+          template: card_input_boolean
+          entity: input_boolean.guests_staying_man_cave
+          variables:
+            ulm_card_input_boolean_name: Guest's Staying?
+            ulm_card_input_boolean_icon: mdi:account
+
+        - type: custom:button-card
+          template: card_subtitle
+          name: "Sensors"
+          variables:
+            ulm_card_icon: mdi:graph
+
+        - type: custom:button-card
+          template: card_subtitle
+          label: "Energy Usage"
+
+        - type: custom:button-card
+          template: card_graph
+          entity: sensor.3d_printer_power
+          variables:
+            ulm_card_graph_color: "var(--google-blue)"
+            ulm_card_graph_name: 3D Printer
+            ulm_card_graph_entity: sensor.3d_printer_energy_today
+            ulm_card_graph_entity2: sensor.3d_printer_power
+            ulm_card_graph_color2: "var(--google-red)"
+            ulm_card_graph_line_width: 2
+
+        - type: custom:button-card
+          template: card_subtitle
+          label: Batteries
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            {% for x in batteries %}
+            - type: custom:button-card
+              template: card_battery
+              entity: sensor.{{ x }}
+              variables:
+                ulm_card_battery_battery_level_danger: 10
+                ulm_card_battery_battery_level_warning: 30
+            {% endfor %}

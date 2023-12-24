@@ -1,0 +1,93 @@
+# @see https://github.com/basnijholt/adaptive-lighting
+adaptive_lighting:
+  # DOWNSTAIRS
+  - name: Lounge
+    lights:
+      - light.lounge
+    min_brightness: 3
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Nook
+    lights:
+      - light.nook
+    min_brightness: 3
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Kitchen
+    lights:
+      - light.kitchen
+    min_brightness: 40
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Downstairs Toilet
+    lights:
+      - light.downstairs_toilet
+    min_brightness: 20
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Hallway
+    lights:
+      - light.hallway
+    min_brightness: 5
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 120
+    transition: 30
+    initial_transition: 0
+
+  # UPSTAIRS
+  - name: Master Bedroom
+    lights:
+      - light.master_bedroom
+    min_brightness: 3
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Guest Bedroom
+    lights:
+      - light.guest_bedroom
+    min_brightness: 5
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Man Cave
+    lights:
+      - light.man_cave
+    min_brightness: 5
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Sarah's Office
+    lights:
+      - light.sarahs_office
+    min_brightness: 5
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5

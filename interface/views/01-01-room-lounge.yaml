@@ -1,5 +1,6 @@
 # lovelace_gen
 {% set lights = [ 'lounge_colour', 'lounge_floor_lamp','dining_room_colour' ] %}
+{% set batteries = [ 'lounge_switch_battery', 'lounge_radiator_battery_level','dining_room_radiator_battery_level' ] %}
 
 - title: Lounge
   path: lounge
@@ -9,16 +10,21 @@
 
     - type: horizontal-stack
       cards:
-        - !include ../chips/back.yaml
+        - !include ../chips/chip_back.yaml
+        - type: 'custom:button-card'
+          template: chip_occupancy
+          entity: binary_sensor.lounge_occupancy
         - type: custom:button-card
           template: chip_vacuum_room
           variables:
             ulm_card_segments: '["18","20"]'
+
+
         #- !include ../chips/presence.yaml
         #- !include ../chips/wifi.yaml
         # - !include ../chips/spotify.yaml
         # - !include ../chips/temperature.yaml
-        # - !include ../chips/chance_of_rain.yaml
+        # - !include ../chips/chip_chance_of_rain.yaml
 
     - type: vertical-stack
       cards:
@@ -45,6 +51,24 @@
               ulm_card_light_enable_popup: true
           {% endfor %}
 
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: Heating
+
+        - type: "custom:button-card"
+          template: card_climate
+          entity: climate.lounge
+          variables:
+            ulm_card_thermostat_name: "Lounge Radiator"
+
+        - type: "custom:button-card"
+          template: card_climate
+          entity: climate.dining_room
+          variables:
+            ulm_card_thermostat_name: "Dining Room Radiator"
 
     - type: vertical-stack
       cards:
@@ -65,6 +89,21 @@
             ulm_card_media_player_collapsible: true
             ulm_card_media_player_more_info: true
 
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: "Devices"
+
+        - type: "custom:button-card"
+          template: card_vacuum
+          entity: vacuum.valetudo_roborock
+          variables:
+            ulm_card_vacuum_name: Robbie the Rover
+            ulm_card_vacuum_camera: camera.rockrobo_map
+
     - type: vertical-stack
       cards:
 
@@ -77,10 +116,11 @@
           square: false
           cards:
 
+            {% for x in batteries %}
             - type: custom:button-card
               template: card_battery
-              entity: sensor.lounge_switch_battery
+              entity: sensor.{{ x }}
               variables:
-                ulm_card_battery_name: Light Switch
                 ulm_card_battery_battery_level_danger: 10
                 ulm_card_battery_battery_level_warning: 30
+            {% endfor %}

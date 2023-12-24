@@ -1,0 +1,165 @@
+# lovelace_gen
+
+- title: System
+  path: system
+  icon: mdi:server
+  visible:
+    - user: 96aa57047c3140719ded88983083d576
+
+  cards:
+    - type: horizontal-stack
+      cards:
+        - !include ../chips/chip_back.yaml
+        #- !include ../chips/presence.yaml
+        #- !include ../chips/wifi.yaml
+        # - !include ../chips/spotify.yaml
+        # - !include ../chips/temperature.yaml
+        # - !include ../chips/chance_of_rain.yaml
+
+    - type: vertical-stack
+      cards:
+        - type: custom:button-card
+          template: card_title
+          name: "Recently Added to Plex"
+          label: "Movies"
+
+        - type: custom:upcoming-media-card
+          entity: sensor.recently_added_movies
+          date: ddmm
+          clock: 24
+          max: 3
+          flag: false
+          image_style: fanart
+          box_shadows: false
+          hide_empty: true
+          line1_text: "Added: $date"
+          line2_text: "Runtime: $runtime"
+          line3_text: "$genres | $rating"
+          line4_text: "$studio"
+          title_color: var(--accent-color)
+          style:
+            .: |
+              ha-card {
+                margin: 0px 0px 5px 0px;
+                border-radius: 0px;
+                box-shadow: none;
+                background: transparent;
+              }
+              ha-card > div {
+                padding: 0px !important;
+              }
+              ha-card .rece_fanart {
+                border-radius: var(--border-radius);
+                box-shadow: var(--box-shadow);
+              }
+              ha-card .rece_fan_fanart {
+                box-shadow: none;
+              }
+              ha-card .rece_svg_fanart {
+                margin: 0;
+                padding-left: 14px;
+                padding-top: 12px;
+              }
+              ha-card .rece_line0_fanart {
+                font-size: 14px;
+                fill: white;
+              }
+              ha-card .rece_line1_fanart, ha-card .rece_line2_fanart, ha-card .rece_line3_fanart, ha-card .rece_line4_fanart {
+                filter: opacity(80%);
+                font-size: 12px;
+              }
+
+        - type: custom:button-card
+          template: card_title
+          label: "TV Shows"
+
+        - type: custom:upcoming-media-card
+          entity: sensor.recently_added_tv
+          date: ddmm
+          clock: 24
+          max: 3
+          flag: false
+          image_style: fanart
+          box_shadows: false
+          hide_empty: true
+          title_text: $episode
+          line1_text: $title
+          line2_text: "Added: $date"
+          line3_text: "Runtime: $runtime hrs"
+          line4_text: "Episode: $number"
+          title_color: var(--accent-color)
+
+    # Presence Sensors
+    - type: custom:auto-entities
+      card:
+        type: entities
+        state_color: true
+        title: BEDROOM
+      filter:
+        include:
+          - entity_id: "*athom_master_bedroom*"
+    # Presence Sensors
+    - type: custom:auto-entities
+      card:
+        type: entities
+        state_color: true
+        title: LOUNGE
+      filter:
+        include:
+          - entity_id: "*athom_lounge*"
+    # Presence Sensors
+    - type: custom:auto-entities
+      card:
+        type: entities
+        state_color: true
+        title: KITCHEN
+      filter:
+        include:
+          - entity_id: "*athom_kitchen*"
+
+    - type: custom:auto-entities
+      card:
+        type: entities
+        state_color: true
+        title: 3D Printer
+      filter:
+        include:
+          - entity_id: "*3d_printer*"
+
+    - type: custom:auto-entities
+      card:
+        type: entities
+        state_color: true
+        title: Mini Fridge
+      filter:
+        include:
+          - entity_id: "*fridge*"
+
+    - type: custom:auto-entities
+      card:
+        type: entities
+        state_color: true
+        title: MQTT
+      filter:
+        include:
+          - integration: "mqtt"
+
+    #hildebrandglow_dcc
+    - type: custom:auto-entities
+      card:
+        type: entities
+        state_color: true
+        title: Hildebrand Glow
+      filter:
+        include:
+          - integration: "hildebrandglow_dcc"
+
+    #automations
+    - type: custom:auto-entities
+      card:
+        type: entities
+        state_color: true
+        title: Automations
+      filter:
+        include:
+          - entity_id: "automation.*"

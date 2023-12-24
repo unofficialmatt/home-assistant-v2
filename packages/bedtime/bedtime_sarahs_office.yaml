@@ -1,0 +1,67 @@
+automation:
+  - alias: Sarah's Office - Sleep Mode - Wind Down
+    id: "1702244030"
+    description: "Initialise Wind Down mode when motion is detected in Sarah's Office between 20:30 and 03:00"
+    trigger:
+      # When either mmWave or PIR sensor are triggered (can't use binary_sensor.sarahs_office_occupancy as it might already be on)
+      - platform: state
+        entity_id: binary_sensor.sarahs_office_mmwave_sensor
+        to: "on"
+      - platform: state
+        entity_id: binary_sensor.sarahs_office_pir_sensor
+        to: "on"
+    condition:
+      condition: and
+      conditions:
+        # 1. Sleep mode is currently set to Off
+        - condition: template
+          value_template: "{{ float(states('input_number.sarahs_office_bedtime_status')) == 0.0 }}"
+        # 2. It is between 20:30 and 03:00
+        - condition: time
+          after: "20:30:00"
+          before: "03:00:00"
+        # 3. There are guests staying in this room
+        - condition: state
+          entity_id: input_boolean.guests_staying_sarahs_office
+          state: "on"
+    action:
+      - service: input_number.increment
+        data:
+          entity_id: input_number.sarahs_office_bedtime_status
+
+  - alias: Sarah's Office - Sleep Mode - Asleep
+    id: "1702244031"
+    description: "Initialise Asleep mode when the lights are turned off in Sarah's Office, when 'Wind Down' mode is active"
+    trigger:
+      - platform: state
+        entity_id: light.sarahs_office
+        to: "off"
+    condition:
+      # 1. Sleep mode is currently set to Wind Down
+      - condition: template
+        value_template: "{{ float(states('input_number.sarahs_office_bedtime_status')) == 1.0 }}"
+    action:
+      - service: input_number.increment
+        data:
+          entity_id: input_number.sarahs_office_bedtime_status
+
+  - alias: Sarah's Office - Sleep Mode - Reset
+    id: "1702244032"
+    description: "Resets sleep mode when occupancy is not detected for 15 minutes in Sarah's Office"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.sarahs_office_occupancy
+        to: "off"
+        for:
+          minutes: 15
+    condition:
+      # 1. Sleep mode is currently set to Wind Down or Asleep
+      - condition: template
+        value_template: "{{ float(states('input_number.sarahs_office_bedtime_status')) > 0.0 }}"
+    action:
+      - service: input_number.set_value
+        data:
+          entity_id: input_number.sarahs_office_bedtime_status
+          value: 0.0
+      - service: switch.turn_off
+        entity_id: switch.adaptive_lighting_sleep_mode_sarahs_office

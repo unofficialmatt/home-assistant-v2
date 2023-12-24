@@ -1,0 +1,46 @@
+automation:
+  - alias: Bathroom - turn on radiator
+    id: "1701529588"
+    description: "Turns on Bathroom Radiator at 6am if it's cold outside and the house is occupied"
+    trigger:
+      - platform: time
+        at: "06:00:00"
+    condition:
+      condition: and
+      conditions:
+        # 1. The house is occupied
+        - condition: state
+          entity_id: input_select.home_status
+          state: "Home"
+        # 2. It's cold outside
+        # - condition: numeric_state
+        #   entity_id: sensor.weatherbit_apparent_temperature
+        #   below: 8
+        # 3. The temperature in the room is lower than the target temperature
+        - condition: template
+          value_template: "{{ states('sensor.bathroom_temperature') | float < 17.5 }}"
+        # 4. The target temperature of the radiator does not already match the target temperature we want (prevents this automation running every 5 mins)
+        - condition: template
+          value_template: "{{ state_attr('climate.bathroom', 'temperature') | float != 18  }}"
+    action:
+      - service: climate.set_temperature
+        data_template:
+          temperature: 18
+        target:
+          entity_id: climate.bathroom
+
+  - alias: Bathroom - turn off radiator
+    id: "1701529588"
+    description: "Turns off Bathroom Radiator at 9am"
+    trigger:
+      - platform: time
+        at: "09:00:00"
+    condition:
+      condition: template
+      value_template: "{{ state_attr('climate.bathroom', 'temperature') | float != states('sensor.unoccupied_target_temperature') | float }}"
+    action:
+      - service: climate.set_temperature
+        data_template:
+          temperature: "{{ states('sensor.unoccupied_target_temperature') | int }}"
+        target:
+          entity_id: climate.bathroom

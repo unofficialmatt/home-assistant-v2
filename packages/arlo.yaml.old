@@ -1,0 +1,39 @@
+# Custom Arlo integration
+# @link https://github.com/twrecked/hass-aarlo
+
+aarlo:
+  username: !secret arlo_username
+  password: !secret arlo_password
+  refresh_devices_every: 2
+  stream_timeout: 120
+  tfa_source: imap
+  tfa_type: email
+  tfa_host: !secret arlo_tfa_host
+  tfa_username: !secret arlo_username
+  tfa_password: !secret arlo_tfa_password
+
+camera:
+  - platform: aarlo
+
+# TODO: Motion and sound may come in handy later
+# binary_sensor:
+#   - platform: aarlo
+#     monitored_conditions:
+#     - motion
+#     - sound
+#     - ding
+#     - connectivity
+
+sensor:
+  - platform: aarlo
+    monitored_conditions:
+      # - total_cameras
+      - last_capture
+      # - recent_activity
+      # - captured_today
+      - battery_level
+    # - signal_strength
+    # - temperature
+    # - humidity
+    # - air_quality
+# TODO: Arm and disarm when we leave the house

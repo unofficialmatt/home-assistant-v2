@@ -1,10 +1,9 @@
 # Exclude hidden files
+._*
 .*
 
 ###### INCLUDE
 !.gitignore
-!*.yaml
-!*.md
 
 # Ignore folders.
 .storage
@@ -15,6 +14,7 @@
 ip_bans.yaml
 secrets.yaml
 known_devices.yaml
+govee_learning.yaml
 
 # DB and logs
 *.db*
@@ -24,4 +24,5 @@ known_devices.yaml
 # HACS
 custom_components
 www/community/
+/www/upcoming-media-card-images/
 ui_lovelace_minimalist/

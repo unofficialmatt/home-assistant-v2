@@ -1,5 +1,6 @@
 # lovelace_gen
 {% set lights = [ 'master_bedroom_colour','bedroom_headboard' ] %}
+{% set batteries = [ 'master_bedroom_radiator_battery_level' ] %}
 
 - title: Bedroom
   path: bedroom
@@ -9,7 +10,10 @@
 
     - type: horizontal-stack
       cards:
-        - !include ../chips/back.yaml
+        - !include ../chips/chip_back.yaml
+        - type: 'custom:button-card'
+          template: chip_occupancy
+          entity: binary_sensor.master_bedroom_occupancy
         #- !include ../chips/presence.yaml
         #- !include ../chips/wifi.yaml
         # - !include ../chips/spotify.yaml
@@ -41,6 +45,21 @@
               ulm_card_light_enable_popup: true
           {% endfor %}
 
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: Heating
+
+        - type: "custom:button-card"
+          template: card_climate
+          entity: climate.master_bedroom
+          variables:
+            ulm_card_thermostat_name: "Radiator"
+
+    - type: vertical-stack
+      cards:
 
         - type: custom:button-card
           template: card_title
@@ -75,3 +94,25 @@
             ulm_card_media_player_enable_popup: true
             ulm_card_media_player_collapsible: true
             ulm_card_media_player_more_info: true
+
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: Batteries
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            {% for x in batteries %}
+            - type: custom:button-card
+              template: card_battery
+              entity: sensor.{{ x }}
+              variables:
+                ulm_card_battery_battery_level_danger: 10
+                ulm_card_battery_battery_level_warning: 30
+            {% endfor %}

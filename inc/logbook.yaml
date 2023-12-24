@@ -3,3 +3,5 @@ include:
     - device_tracker
     - person
     - automation
+  entities:
+    - sensor.sunlight_pct

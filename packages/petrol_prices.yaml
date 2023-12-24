@@ -1,0 +1,71 @@
+# @see https://www.reddit.com/r/homeassistant/comments/18f3gn9/how_would_you_display_this_data/?share_id=3Iut-0GT7GnLmfZASgEBH&utm_content=2&utm_medium=ios_app&utm_name=ioscss&utm_source=share&utm_term=1
+# @see https://www.gov.uk/guidance/access-fuel-price-data
+
+homeassistant:
+  customize:
+    sensor.fuel_price_bp_park_gate:
+      latitude: 50.871140
+      longitude: -1.265440
+    sensor.fuel_price_shell_fareham:
+      latitude: 50.871140
+      longitude: -1.265440
+    sensor.fuel_price_tesco_bursledon:
+      latitude: 50.894661
+      longitude: -1.320609
+    sensor.fuel_price_tesco_winnall:
+      latitude: 51.068281
+      longitude: -1.293489
+    sensor.fuel_price_tesco_whiteley:
+      latitude: 50.886391
+      longitude: -1.245759
+  customize_glob:
+    "*fuel*":
+      icon: mdi:gas-station-outline
+    "*fuel_price_tesco*":
+      brand: Tesco
+    "*fuel_price_shell*":
+      brand: Shell
+    "*fuel_price_bp*":
+      brand: BP
+rest:
+  - resource: https://www.bp.com/en_gb/united-kingdom/home/fuelprices/fuel_prices_data.json
+    scan_interval: 21605
+    sensor:
+      - name: "Fuel Price - BP Park Gate"
+        json_attributes:
+          - "last_updated"
+        value_template: "{{ value_json.stations | selectattr('site_id', 'eq', 'gcp17hy9c5gd') | map(attribute='prices.E10') | first }}"
+        force_update: true
+        unit_of_measurement: "£"
+
+  - resource: https://www.shell.co.uk/fuel-prices-data.html
+    scan_interval: 21605
+    sensor:
+      - name: "Fuel Price - Shell Fareham"
+        json_attributes:
+          - "last_updated"
+        value_template: "{{ (value_json.stations | selectattr('site_id', 'eq', 'gcp17dj0rcps') | map(attribute='prices.E10') | first) / 100 }}"
+        force_update: true
+        unit_of_measurement: "£"
+
+  - resource: https://www.tesco.com/fuel_prices/fuel_prices_data.json
+    scan_interval: 21605
+    sensor:
+      - name: "Fuel Price - Tesco Bursledon"
+        json_attributes:
+          - "last_updated"
+        value_template: "{{ value_json.stations | selectattr('site_id', 'eq', 'gcp19cn6gs6w') | map(attribute='prices.E10') | first }}"
+        force_update: true
+        unit_of_measurement: "£"
+      - name: "Fuel Price - Tesco Winnall"
+        json_attributes:
+          - "last_updated"
+        value_template: "{{ value_json.stations | selectattr('site_id', 'eq', 'gcp4d8dn798d') | map(attribute='prices.E10') | first }}"
+        force_update: true
+        unit_of_measurement: "£"
+      - name: "Fuel Price - Tesco Whiteley"
+        json_attributes:
+          - "last_updated"
+        value_template: "{{ value_json.stations | selectattr('site_id', 'eq', 'gcp17xsfewyf') | map(attribute='prices.E10') | first }}"
+        force_update: true
+        unit_of_measurement: "£"

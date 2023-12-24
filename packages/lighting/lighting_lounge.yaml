@@ -1,0 +1,173 @@
+input_select:
+  lounge_light_mode:
+    name: Lounge Scene Selector
+    options:
+      - Adaptive
+      - Read
+      - Dreamy Dusk
+      - Galaxy
+      - Nebula
+      - Majestic Morning
+      - Disturbia
+      - Tropical Twilight
+      - Frosty Dawn
+      - Vapor Wave
+      - Palm Beach
+      - Rest
+      # TODO: Turn on AmbiLight
+    initial: Adaptive
+    icon: mdi:lightbulb
+
+automation:
+  - alias: Lounge - Scene Cycle
+    id: "1701627404"
+    description: "Cycles through Lounge Scenes when Hue Switch 1 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "lounge_dimmer_switch_button"
+          type: short_release
+          subtype: 1
+    action:
+      - service: input_select.select_next
+        entity_id: input_select.lounge_light_mode
+
+  - alias: Lounge - Force Adaptive Lighting
+    id: "1701627404b"
+    description: "Forces Adaptive Lighting in Lounge when Hue Switch 1 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "lounge_dimmer_switch_button"
+          type: long_release
+          subtype: 1
+    action:
+      - service: input_select.select_option
+        entity_id: input_select.lounge_light_mode
+        data:
+          option: Adaptive
+
+  - alias: Lounge - Scene Set
+    id: "1701627404c"
+    description: "Sets the Lounge Scene when the Input Select is changed"
+    trigger:
+      - platform: state
+        entity_id: input_select.lounge_light_mode
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_select.lounge_light_mode
+                state: "Adaptive"
+            sequence:
+              - service: adaptive_lighting.set_manual_control
+                data:
+                  entity_id: switch.adaptive_lighting_lounge
+                  manual_control: false
+
+          - conditions:
+              - condition: template
+                value_template: "{{ not is_state('input_select.lounge_light_mode', 'Adaptive') }}"
+            sequence:
+              - service: scene.turn_on
+                data_template:
+                  entity_id: >
+                    scene.lounge_{{ states('input_select.lounge_light_mode') | lower | replace(' ', '_') }}
+
+  - alias: Lounge - Light Brightness up 5%
+    id: "1701627405"
+    description: "Turns Lounge Lights brightness up 5% when Hue Switch 2 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "lounge_dimmer_switch_button"
+          type: short_release
+          subtype: 2
+    action:
+      - service: light.turn_on
+        entity_id: light.lounge
+        data:
+          brightness_step_pct: 5
+
+  - alias: Lounge - Light Brightness up continued
+    id: "1701627405b"
+    description: "Turns Lounge Lights brightness up 10% incrementally when Hue Switch 2 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "lounge_dimmer_switch_button"
+          type: repeat
+          subtype: 2
+    action:
+      - service: light.turn_on
+        entity_id: light.lounge
+        data:
+          brightness_step_pct: 10
+
+  - alias: Lounge - Light Brightness down 5%
+    id: "1701627406"
+    description: "Turns Lounge Lights brightness down 5% when Hue Switch 3 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "lounge_dimmer_switch_button"
+          type: short_release
+          subtype: 3
+    condition:
+      - condition: state
+        entity_id: light.lounge
+        state: "on"
+    action:
+      - service: light.turn_on
+        entity_id: light.lounge
+        data:
+          brightness_step_pct: -5
+
+  - alias: Lounge - Light Brightness down continued
+    id: "1701627406b"
+    description: "Turns Lounge Lights brightness down 10% incrementally when Hue Switch 3 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "lounge_dimmer_switch_button"
+          type: repeat
+          subtype: 3
+    condition:
+      - condition: state
+        entity_id: light.lounge
+        state: "on"
+    action:
+      - service: light.turn_on
+        entity_id: light.lounge
+        data:
+          brightness_step_pct: -10
+
+  - alias: Lounge - Switch turn off lights
+    id: "1701627407"
+    description: "Turns off Lounge Lights when Hue Switch 4 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "lounge_dimmer_switch_button"
+          type: short_release
+          subtype: 4
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "lounge_dimmer_switch_button"
+          type: long_release
+          subtype: 4
+    condition:
+      - condition: state
+        entity_id: light.lounge
+        state: "on"
+    action:
+      - service: light.turn_off
+        entity_id: light.lounge

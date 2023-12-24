@@ -1,4 +1,7 @@
 # lovelace_gen
+{% set lights = [ 'nook' ] %}
+{% set batteries = [ 'nook_radiator_battery_level' ] %}
+
 
 - title: Nook
   path: nook
@@ -7,20 +10,72 @@
   cards:
     - type: horizontal-stack
       cards:
-        - !include ../chips/back.yaml
-        - type: custom:button-card
-          template: chip_vacuum_room
-          variables:
-            ulm_card_segments: '["19"]'
+        - !include ../chips/chip_back.yaml
+        # - type: custom:button-card
+        #   template: chip_vacuum_room
+        #   variables:
+        #     ulm_card_segments: '["19"]'
         #- !include ../chips/presence.yaml
         #- !include ../chips/wifi.yaml
         # - !include ../chips/spotify.yaml
         # - !include ../chips/temperature.yaml
         # - !include ../chips/chance_of_rain.yaml
 
-    - type: "custom:button-card"
-      template: card_vacuum
-      entity: vacuum.valetudo_roborock
-      variables:
-        ulm_card_vacuum_name: Robbie the Rover
-        ulm_card_vacuum_camera: camera.rockrobo_map
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          name: "Nook"
+          label: "Lights"
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+          {% for x in lights %}
+          - type: custom:button-card
+            template: card_light
+            entity: light.{{ x }}
+            variables:
+              ulm_card_light_enable_slider: true
+              ulm_card_light_enable_color: true
+              #ulm_card_light_force_background_color: true
+              ulm_card_light_enable_collapse: true
+              ulm_card_light_enable_popup: true
+          {% endfor %}
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: Heating
+
+        - type: "custom:button-card"
+          template: card_climate
+          entity: climate.nook
+          variables:
+            ulm_card_thermostat_name: "Radiator"
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: Batteries
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            {% for x in batteries %}
+            - type: custom:button-card
+              template: card_battery
+              entity: sensor.{{ x }}
+              variables:
+                ulm_card_battery_battery_level_danger: 10
+                ulm_card_battery_battery_level_warning: 30
+            {% endfor %}

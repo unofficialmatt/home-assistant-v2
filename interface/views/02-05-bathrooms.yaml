@@ -1,0 +1,66 @@
+# lovelace_gen
+{% set batteries = ['bathroom_radiator_battery_level','en_suite_radiator_battery_level'] %}
+
+- title: Bathrooms
+  path: bathrooms
+  icon: mdi:shower-head
+
+  cards:
+
+    - type: horizontal-stack
+      cards:
+        - !include ../chips/chip_back.yaml
+        #- !include ../chips/presence.yaml
+        #- !include ../chips/wifi.yaml
+        # - !include ../chips/spotify.yaml
+        # - !include ../chips/temperature.yaml
+        # - !include ../chips/chance_of_rain.yaml
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          name: "Family Bathroom"
+          label: Heating
+
+        - type: "custom:button-card"
+          template: card_climate
+          entity: climate.bathroom
+          variables:
+            ulm_card_thermostat_name: "Radiator"
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          name: "En Suite"
+          label: Heating
+
+        - type: "custom:button-card"
+          template: card_climate
+          entity: climate.en_suite
+          variables:
+            ulm_card_thermostat_name: "Radiator"
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: Batteries
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            {% for x in batteries %}
+            - type: custom:button-card
+              template: card_battery
+              entity: sensor.{{ x }}
+              variables:
+                ulm_card_battery_battery_level_danger: 10
+                ulm_card_battery_battery_level_warning: 30
+            {% endfor %}

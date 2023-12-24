@@ -1,6 +1,0 @@
-homeassistant:
-  customize_glob:
-    "*version*":
-      icon: mdi:package-up
-
-lovelace_gen:

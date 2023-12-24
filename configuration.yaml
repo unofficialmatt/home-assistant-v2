@@ -13,6 +13,7 @@ homeassistant:
   temperature_unit: C
   unit_system: metric
   time_zone: Europe/London
+  country: GB
   external_url: !secret external_url
   internal_url: !secret internal_url
   latitude: !secret zone_home_latitude
@@ -28,10 +29,9 @@ mqtt:
 recorder:
   purge_keep_days: 7
   db_url: !secret mariadb_url # Use MariaDB for the database
-
-# Text to speech
-tts:
-  - platform: google_translate
+  exclude:
+    entities:
+      - sensor.roborock_map
 
 http:
   ip_ban_enabled: true
@@ -41,14 +41,15 @@ http:
     - !secret trusted_proxy_1
     - !secret trusted_proxy_2
     - !secret trusted_proxy_3
-
-automation: !include automations.yaml
+    - !secret trusted_proxy_4
 
 history: !include inc/history.yaml
 logbook: !include inc/logbook.yaml
 
 logger:
-  default: error
+  default: warning
+  logs:
+    homeassistant.components.mqtt: debug
 
 frontend:
   themes: !include_dir_merge_named themes
@@ -58,3 +59,10 @@ frontend:
 lovelace:
   mode: yaml
   resources: !include interface/resources.yaml
+
+panel_iframe:
+  esp_home:
+    title: "ESPHome"
+    icon: mdi:chip
+    url: !secret esp_home_url
+    require_admin: true

@@ -1,0 +1,217 @@
+automation:
+  - alias: Man Cave - turn on lights
+    id: "1697744273"
+    description: "Turns on Man Cave Lights when motion is detected or it gets dark outside"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.man_cave_occupancy
+        to: "on"
+      - platform: numeric_state
+        entity_id: sensor.sunlight_pct
+        below: 30
+        for:
+          minutes: 5
+    condition:
+      condition: and
+      conditions:
+        # 1. Lights are currently off
+        - condition: state
+          entity_id: light.man_cave
+          state: "off"
+        # 2. The lights are not on 'manual control' mode
+        - condition: template
+          value_template: "{{ state_attr('switch.adaptive_lighting_man_cave', 'manual_control') != true }}"
+        # 3. It's dark outside
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          below: 35
+        # 4. The room isn't in Wind Down or Sleep mode
+        - condition: numeric_state
+          entity_id: input_number.man_cave_bedtime_status
+          below: 1
+    action:
+      - service: light.turn_on
+        entity_id: light.man_cave
+      # - service: light.turn_on
+      #   entity_id: light.man_cave_cds
+      #   data:
+      #     rgb_color:
+      #       - 251
+      #       - 0
+      #       - 255
+      #     brightness: 255
+
+  - alias: Man Cave - turn off lights
+    id: "1697744275"
+    description: "Turns off Man Cave Lights when occupancy is no longer detected"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.man_cave_occupancy
+        to: "off"
+        for:
+          minutes: 5
+    action:
+      - service: light.turn_off
+        entity_id: light.man_cave_cds
+        data:
+          transition: 5
+      - service: light.turn_off
+        entity_id: light.man_cave
+        data:
+          transition: 5
+
+  - alias: Man Cave - turn on radiator
+    id: "1697744276"
+    description: "Turns on Man Cave Radiator when occupancy is detected, with a temperature dependent on the time of day"
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: state
+        entity_id: binary_sensor.man_cave_occupancy
+        to: "on"
+    condition:
+      condition: and
+      conditions:
+        # 1. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.man_cave_occupancy
+          state: "on"
+        # 2. It's cold outside
+        # - condition: numeric_state
+        #   entity_id: sensor.weatherbit_apparent_temperature
+        #   below: 8
+        # 3. The temperature in the room is lower than the target temperature
+        - condition: template
+          value_template: "{{ states('sensor.man_cave_temperature') | float < states('sensor.room_target_temperature') | float - 0.5 }}"
+        # 4. The target temperature of the radiator does not already match the target temperature we want (prevents this automation running every 5 mins)
+        - condition: template
+          value_template: "{{ state_attr('climate.man_cave', 'temperature') | float != states('sensor.room_target_temperature') | float }}"
+    action:
+      - service: climate.set_temperature
+        data_template:
+          temperature: "{{ states('sensor.room_target_temperature') | int }}"
+        target:
+          entity_id: climate.man_cave
+
+  - alias: Man Cave - turn off radiator
+    id: "1697744277"
+    description: "Turns off Man Cave Radiator when occupancy is not detected for 10 minutes"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.man_cave_occupancy
+        to: "off"
+        for:
+          minutes: 10
+    action:
+      - service: climate.set_temperature
+        data_template:
+          temperature: "{{ states('sensor.unoccupied_target_temperature') | int }}"
+        target:
+          entity_id: climate.man_cave
+
+  - alias: Man Cave - Turn on Scent
+    id: "1700208840"
+    description: "Turns on Man Cave Scent if occupancy is detected, once per day"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.man_cave_occupancy
+        to: "on"
+    condition:
+      # The automation has not run yet today
+      - "{{ state_attr(this.entity_id, 'last_triggered').date() < now().date() }}"
+    action:
+      - service: switch.turn_on
+        entity_id: switch.man_cave_scent
+
+  - alias: Man Cave - Turn off Scent
+    id: "1700208841"
+    description: "Turns off Man Cave scent after it has been active for 4 hours"
+    trigger:
+      - platform: state
+        entity_id: switch.man_cave_scent
+        to: "on"
+        for:
+          hours: 4
+    action:
+      - service: switch.turn_off
+        entity_id: switch.man_cave_scent
+
+  # - alias: Light - Turn On Man Cave
+  #   id: "1697744273"
+  #   description: Turns on Man Cave Lights if occupancy is detected
+  #   trigger:
+  #     - platform: state
+  #       entity_id: binary_sensor.man_cave_occupancy
+  #       to: "on"
+  #     - platform: numeric_state
+  #       entity_id: sensor.sunlight_pct
+  #       below: 30
+  #       for:
+  #         minutes: 5
+  #   condition:
+  #     condition: and
+  #     conditions:
+  #       # 1. It's dark outside
+  #       - condition: numeric_state
+  #         entity_id: sensor.sunlight_pct
+  #         below: 30
+  #       # 2. The room is occupied
+  #       - condition: state
+  #         entity_id: binary_sensor.man_cave_occupancy
+  #         state: "on"
+  #       # 3. The lights are off
+  #       - condition: state
+  #         entity_id: light.man_cave
+  #         state: "off"
+  #   action:
+  #     - service: light.turn_on
+  #       entity_id: light.man_cave
+  #     - service: light.turn_on
+  #       entity_id: light.man_cave_cds
+  #       data:
+  #         rgb_color:
+  #           - 251
+  #           - 0
+  #           - 255
+  #         brightness: 255
+
+  # - alias: Light - Turn Off Man Cave if light enough
+  #   id: "1697744274"
+  #   description: Turns off Man Cave Lights if it's light enough
+  #   trigger:
+  #     - platform: numeric_state
+  #       entity_id: sensor.sunlight_pct
+  #       above: 50
+  #       for:
+  #         minutes: 5
+  #   condition:
+  #     # 1. The lights are on
+  #     - condition: state
+  #       entity_id: light.man_cave
+  #       state: "on"
+  #   action:
+  #     - service: light.turn_off
+  #       entity_id: light.man_cave
+  #     - service: light.turn_off
+  #       entity_id: light.man_cave_cds
+
+  # - alias: Light - Turn Off Man Cave if no occupancy
+  #   id: "1697744275"
+  #   description: Turns off Man Cave Lights if no occupancy
+  #   trigger:
+  #     - platform: state
+  #       entity_id: binary_sensor.man_cave_occupancy
+  #       to: "off"
+  #       for:
+  #         minutes: 10
+  #   condition:
+  #     # 1. The lights are on
+  #     - condition: state
+  #       entity_id: light.man_cave
+  #       state: "on"
+  #   action:
+  #     - service: light.turn_off
+  #       entity_id: light.man_cave
+  #     - service: light.turn_off
+  #       entity_id: light.man_cave_cds
+# TODO: Something cool with the CD lights - eg. change colour to match whoever is on Teams

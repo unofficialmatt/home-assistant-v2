@@ -1,0 +1,44 @@
+---
+### Card Title ###
+card_subtitle:
+  tap_action:
+    action: "none"
+  show_icon: true
+  icon: "[[[ return variables.ulm_card_icon ]]]"
+  show_label: true
+  show_name: true
+  size: "100%"
+  styles:
+    card:
+      - background-color: "rgba(0,0,0,0)"
+      - box-shadow: "none"
+      - height: "auto"
+      - width: "auto"
+      - margin-top: "6px"
+      - margin-left: "0px"
+      - margin-bottom: "0px"
+      - padding: "6px"
+      - border-radius: "0px"
+    grid:
+      - grid-template-areas: "'i n' 'l l'"
+      - grid-template-columns: "max_content auto"
+      - grid-template-rows: "min-content min-content"
+    name:
+      - justify-self: "start"
+      - font-weight: "500"
+      - font-size: "1.25rem"
+    label:
+      - justify-self: "start"
+      - font-weight: "bold"
+      - font-size: "1rem"
+      - opacity: "0.6"
+      - margin-top: "6px"
+      # ADD MARGIN LEFT IF ICON IS SET
+      - margin-left: >
+          [[[ if (variables.ulm_card_icon) return "calc(1.25em + 10px)"; else return "0px"; ]]]
+    img_cell:
+      - place-self: "center"
+      - width: "1.25em"
+      - height: "1.25em"
+      - margin-right: "6px"
+      - opacity: "0.25"

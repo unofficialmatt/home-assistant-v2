@@ -1,0 +1,17 @@
+chip_vacuum_room:
+  template: "chips"
+  triggers_update: "all"
+  show_icon: true
+  icon: "mdi:robot-vacuum"
+  styles:
+    grid:
+      - grid-template-areas: "'i'"
+  variables:
+    ulm_card_segments:
+    ulm_card_iterations: "1"
+  tap_action:
+    action: call-service
+    service: script.vacuum_clean_segments_message
+    service_data:
+      segments: "[[[ return variables.ulm_card_segments ]]]"
+      iterations: "[[[ return variables.ulm_card_iterations ]]]"

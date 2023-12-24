@@ -1,0 +1,1 @@
+- TODO: Get all temperature attributes from rad valves and work out how to use them, maybe just display them in the info for each room. And do average home temp

@@ -1,0 +1,124 @@
+# lovelace_gen
+{% set lights = [ 'man_cave_colour','man_cave_lamp', 'man_cave_cds' ] %}
+{% set switches = [ 'man_cave_power_bank', 'man_cave_power_bank_usbs', 'electric_piano', 'man_cave_monitor', 'man_cave_scent', 'man_cave_standing_desk' ] %}
+{% set batteries = [ 'man_cave_radiator_battery_level' ] %}
+
+# TODO: ADD IN SCENE SELECTOR
+- title: Matt's Office
+  path: matt-office
+  icon: mdi:laptop
+
+  cards:
+
+    - type: horizontal-stack
+      cards:
+        - !include ../chips/chip_back.yaml
+        - type: 'custom:button-card'
+          template: chip_occupancy
+          entity: binary_sensor.man_cave_occupancy
+        #- !include ../chips/presence.yaml
+        #- !include ../chips/wifi.yaml
+        # - !include ../chips/spotify.yaml
+        # - !include ../chips/temperature.yaml
+        # - !include ../chips/chance_of_rain.yaml
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          name: "Man Cave"
+          label: "Lights"
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+          {% for x in lights %}
+          - type: custom:button-card
+            template: card_light
+            entity: light.{{ x }}
+            variables:
+              ulm_card_light_enable_slider: true
+              ulm_card_light_enable_color: true
+              #ulm_card_light_force_background_color: true
+              ulm_card_light_enable_collapse: true
+              ulm_card_light_enable_popup: true
+          {% endfor %}
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: Heating
+
+        - type: "custom:button-card"
+          template: card_climate
+          entity: climate.man_cave
+          variables:
+            ulm_card_thermostat_name: "Radiator"
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: "Switches"
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+          {% for x in switches %}
+          - type: custom:button-card
+            template: card_power_outlet
+            entity: switch.{{ x }}
+          {% endfor %}
+
+          - type: custom:button-card
+            template: card_power_outlet
+            variables:
+              ulm_card_power_outlet_icon: mdi:printer-3d
+              ulm_card_power_outlet_consumption_sensor: sensor.3d_printer_power
+            entity: switch.3d_printer
+
+
+    - type: custom:button-card
+      template: card_title
+      label: "Energy Usage"
+
+    - type: custom:button-card
+      template: card_graph
+      entity: sensor.3d_printer_power
+      variables:
+        ulm_card_graph_color: "var(--google-blue)"
+        ulm_card_graph_name: 3D Printer
+        ulm_card_graph_entity: sensor.3d_printer_energy_today
+        ulm_card_graph_entity2: sensor.3d_printer_power
+        ulm_card_graph_color2: "var(--google-red)"
+        ulm_card_graph_line_width: 2
+
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: Batteries
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            {% for x in batteries %}
+            - type: custom:button-card
+              template: card_battery
+              entity: sensor.{{ x }}
+              variables:
+                ulm_card_battery_battery_level_danger: 10
+                ulm_card_battery_battery_level_warning: 30
+            {% endfor %}

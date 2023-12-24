@@ -1,0 +1,3 @@
+# lovelace_gen
+
+!include_dir_merge_named "../chips/chip_templates/"

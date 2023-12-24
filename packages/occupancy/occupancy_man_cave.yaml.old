@@ -1,0 +1,150 @@
+binary_sensor:
+  - platform: bayesian
+    unique_id: "35b1932a-fc99-41f6-9555-f071d1dcd7f9" # generated on https://www.uuidgenerator.net/
+    name: "Man Cave Occupancy"
+    prior: 0.18 # 168hrs in a week - 10 hours a day - 3 days a week = 18% chance of occupancy
+    device_class: occupancy
+    probability_threshold: 0.5 # Lights will turn on when probability is above 50% so we need to be pretty sure
+    observations:
+      - platform: template
+        prob_given_true: 1.0 # If MBP is on, Matt is home and MBP is connected to a display the room definitely has someone in it
+        prob_given_false: 0.2
+        value_template: >
+          {{
+            is_state('sensor.matts_mbp_work_displays', '2') and
+            is_state('person.matt', 'home') and
+            not is_state_attr('binary_sensor.matts_mbp_work_active', 'Sleeping', true)
+          }}
+      - platform: template
+        prob_given_true: 1 # If MBP is on, Matt is home and MBP is connected to a display the room definitely has someone in it
+        prob_given_false: 0.2
+        value_template: >
+          {{
+            is_state('person.matt', 'home') and
+            not is_state_attr('binary_sensor.matts_mbp_active', 'Sleeping', true)
+          }}
+      # - platform: state
+      #   to_state: "on"
+      #   entity_id: switch.man_cave_power_bank_usbs
+      #   prob_given_true: 0.8
+      #   prob_given_false: 0.1
+      # - platform: binary_sensor
+      #   entity_id: motion_sensor.office
+      #   prob_given_true: 0.8
+      #   prob_given_false: 0.2
+      # - platform: state
+      #   to_state: "on"
+      #   entity_id: switch.electric_piano
+      #   prob_given_true: 0.75
+      #   prob_given_false: 0.25
+
+# TODO: Add in motion sensor
+# TODO: Add in smart plugs to detect power draw
+
+automation:
+  - alias: Man Cave - Turn on Scent
+    id: "1700208840"
+    description: "Turns on Man Cave Scent if occupancy is detected, once per day"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.man_cave_occupancy
+        to: "on"
+    condition:
+      # The automation has not run yet today
+      - "{{ state_attr(this.entity_id, 'last_triggered').date() < now().date() }}"
+    action:
+      - service: switch.turn_on
+        entity_id: switch.man_cave_scent
+
+  - alias: Man Cave - Turn off Scent
+    id: "1700208841"
+    description: "Turns off Man Cave scent after it has been active for 2 hours"
+    trigger:
+      - platform: state
+        entity_id: switch.man_cave_scent
+        to: "on"
+        for:
+          hours: 2
+    action:
+      - service: switch.turn_off
+        entity_id: switch.man_cave_scent
+
+  - alias: Light - Turn On Man Cave
+    id: "1697744273"
+    description: Turns on Man Cave Lights if occupancy is detected
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.man_cave_occupancy
+        to: "on"
+      - platform: numeric_state
+        entity_id: sensor.sunlight_pct
+        below: 30
+        for:
+          minutes: 5
+    condition:
+      condition: and
+      conditions:
+        # 1. It's dark outside
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          below: 30
+        # 2. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.man_cave_occupancy
+          state: "on"
+        # 3. The lights are off
+        - condition: state
+          entity_id: light.man_cave
+          state: "off"
+    action:
+      - service: light.turn_on
+        entity_id: light.man_cave
+      - service: light.turn_on
+        entity_id: light.man_cave_cds
+        data:
+          rgb_color:
+            - 251
+            - 0
+            - 255
+          brightness: 255
+
+  - alias: Light - Turn Off Man Cave if light enough
+    id: "1697744274"
+    description: Turns off Man Cave Lights if it's light enough
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.sunlight_pct
+        above: 50
+        for:
+          minutes: 5
+    condition:
+      # 1. The lights are on
+      - condition: state
+        entity_id: light.man_cave
+        state: "on"
+    action:
+      - service: light.turn_off
+        entity_id: light.man_cave
+      - service: light.turn_off
+        entity_id: light.man_cave_cds
+
+  - alias: Light - Turn Off Man Cave if no occupancy
+    id: "1697744275"
+    description: Turns off Man Cave Lights if no occupancy
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.man_cave_occupancy
+        to: "off"
+        for:
+          minutes: 10
+    condition:
+      # 1. The lights are on
+      - condition: state
+        entity_id: light.man_cave
+        state: "on"
+    action:
+      - service: light.turn_off
+        entity_id: light.man_cave
+      - service: light.turn_off
+        entity_id: light.man_cave_cds
+# TODO: Something cool with the CD lights - eg. change colour to match whoever is on Teams

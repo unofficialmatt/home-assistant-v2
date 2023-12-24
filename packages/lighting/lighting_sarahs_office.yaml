@@ -1,0 +1,177 @@
+input_select:
+  sarahs_office_light_mode:
+    name: Sarah's Office Scene Selector
+    options:
+      - Adaptive
+      - Concentrate
+      - Relax
+      - Dimmed
+      - Rest
+      - Tropical Twilight
+      - Galaxy
+      - Ocean Dawn
+      - Pensive
+      - Read
+      - Bright
+      - Energise
+      - Nightlight
+      - Dreamy Dusk
+      - Miami
+      - Mountain Breeze
+      - Autumn Gold
+    initial: Adaptive
+    icon: mdi:lightbulb
+
+automation:
+  - alias: Sarah's Office - Scene Cycle
+    id: "1701629114"
+    description: "Cycles through Sarah's Office Scenes when Hue Switch 1 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "sarahs_office_dimmer_switch_button"
+          type: short_release
+          subtype: 1
+    action:
+      - service: input_select.select_next
+        entity_id: input_select.sarahs_office_light_mode
+
+  - alias: Sarah's Office - Force Adaptive Lighting
+    id: "1701629114b"
+    description: "Forces Adaptive Lighting in Sarah's Office when Hue Switch 1 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "sarahs_office_dimmer_switch_button"
+          type: long_release
+          subtype: 1
+    action:
+      - service: input_select.select_option
+        entity_id: input_select.sarahs_office_light_mode
+        data:
+          option: Adaptive
+
+  - alias: Sarah's Office - Scene Set
+    id: "1701629114c"
+    description: "Sets the Sarah's Office Scene when the Input Select is changed"
+    trigger:
+      - platform: state
+        entity_id: input_select.sarahs_office_light_mode
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_select.sarahs_office_light_mode
+                state: "Adaptive"
+            sequence:
+              - service: adaptive_lighting.set_manual_control
+                data:
+                  entity_id: switch.adaptive_lighting_sarahs_office
+                  manual_control: false
+
+          - conditions:
+              - condition: template
+                value_template: "{{ not is_state('input_select.sarahs_office_light_mode', 'Adaptive') }}"
+            sequence:
+              - service: scene.turn_on
+                data_template:
+                  entity_id: >
+                    scene.sarahs_office_{{ states('input_select.sarahs_office_light_mode') | lower | replace(' ', '_') }}
+
+  - alias: Sarah's Office - Light Brightness up 5%
+    id: "1701629115"
+    description: "Turns Sarah's Office Lights brightness up 5% when Hue Switch 2 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "sarahs_office_dimmer_switch_button"
+          type: short_release
+          subtype: 2
+    action:
+      - service: light.turn_on
+        entity_id: light.sarahs_office
+        data:
+          brightness_step_pct: 5
+
+  - alias: Sarah's Office - Light Brightness up continued
+    id: "1701629115b"
+    description: "Turns Sarah's Office Lights brightness up 10% incrementally when Hue Switch 2 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "sarahs_office_dimmer_switch_button"
+          type: repeat
+          subtype: 2
+    action:
+      - service: light.turn_on
+        entity_id: light.sarahs_office
+        data:
+          brightness_step_pct: 10
+
+  - alias: Sarah's Office - Light Brightness down 5%
+    id: "1701629116"
+    description: "Turns Sarah's Office Lights brightness down 5% when Hue Switch 3 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "sarahs_office_dimmer_switch_button"
+          type: short_release
+          subtype: 3
+    condition:
+      - condition: state
+        entity_id: light.sarahs_office
+        state: "on"
+    action:
+      - service: light.turn_on
+        entity_id: light.sarahs_office
+        data:
+          brightness_step_pct: -5
+
+  - alias: Sarah's Office - Light Brightness down continued
+    id: "1701629116b"
+    description: "Turns Sarah's Office Lights brightness down 10% incrementally when Hue Switch 3 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "sarahs_office_dimmer_switch_button"
+          type: repeat
+          subtype: 3
+    condition:
+      - condition: state
+        entity_id: light.sarahs_office
+        state: "on"
+    action:
+      - service: light.turn_on
+        entity_id: light.sarahs_office
+        data:
+          brightness_step_pct: -10
+
+  - alias: Sarah's Office - Switch turn off lights
+    id: "1701629117"
+    description: "Turns off Sarah's Office Lights when Hue Switch 4 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "sarahs_office_dimmer_switch_button"
+          type: short_release
+          subtype: 4
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "sarahs_office_dimmer_switch_button"
+          type: long_release
+          subtype: 4
+    condition:
+      - condition: state
+        entity_id: light.sarahs_office
+        state: "on"
+    action:
+      - service: light.turn_off
+        entity_id: light.sarahs_office

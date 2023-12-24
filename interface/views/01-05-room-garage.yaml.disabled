@@ -8,7 +8,7 @@
 
     - type: horizontal-stack
       cards:
-        - !include ../chips/back.yaml
+        - !include ../chips/chip_back.yaml
         #- !include ../chips/presence.yaml
         #- !include ../chips/wifi.yaml
         # - !include ../chips/spotify.yaml

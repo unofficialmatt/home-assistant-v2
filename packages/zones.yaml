@@ -1,0 +1,31 @@
+zone:
+  - name: Home
+    latitude: !secret zone_home_latitude
+    longitude: !secret zone_home_longitude
+    radius: 10
+    icon: mdi:home
+  - name: Matt Work
+    latitude: !secret zone_work_matt_latitude
+    longitude: !secret zone_work_matt_longitude
+    radius: 50
+    icon: mdi:worker
+  # - name: Sarah Work
+  #   latitude:  !secret zone_work_sarah_latitude
+  #   longitude: !secret zone_work_sarah_longitude
+  #   radius: 50
+  #   icon: mdi:worker
+  # - name: Tesco
+  #   latitude:  !secret zone_tesco_latitude
+  #   longitude: !secret zone_tesco_longitude
+  #   radius: 50
+  #   icon: mdi:shopping_cart
+  # - name: Shopping Center
+  #   latitude:  !secret zone_shop_center_latitude
+  #   longitude: !secret zone_shop_center_longitude
+  #   radius: 50
+  #   icon: mdi:shopping_cart
+  # - name: Sarah's Parents
+  #   latitude:  !secret zone_sarah_parents_latitude
+  #   longitude: !secret zone_sarah_parents_longitude
+  #   radius: 50
+  #   icon: mdi:people

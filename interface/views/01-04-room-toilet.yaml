@@ -1,5 +1,6 @@
 # lovelace_gen
 {% set lights = [ 'downstairs_toilet' ] %}
+{% set batteries = [ 'downstairs_toilet_door_battery', 'downstairs_toilet_radiator_battery_level' ] %}
 
 - title: Downstairs Toilet
   path: toilet
@@ -9,14 +10,28 @@
 
     - type: horizontal-stack
       cards:
-        - !include ../chips/back.yaml
-        #- !include ../chips/presence.yaml
-        #- !include ../chips/wifi.yaml
-        # - !include ../chips/spotify.yaml
-        # - !include ../chips/temperature.yaml
-        # - !include ../chips/chance_of_rain.yaml
-        # TODO: Chip for Door Open/Closed
-        # TODO: Chip for occupied Yes/No
+        - !include ../chips/chip_back.yaml
+
+        # - type: 'custom:button-card'
+        #   template: chip_door_state
+        #   entity: binary_sensor.downstairs_toilet_door
+
+        - type: 'custom:button-card'
+          template: chip_occupancy
+          entity: binary_sensor.toilet_occupancy
+
+        - type: 'custom:button-card'
+          template: chip_mdi_icon_state
+          variables:
+            ulm_chip_mdi_icon_state_entity: binary_sensor.toilet_motion_sensor_triggered
+            ulm_chip_mdi_icon_state_icon: mdi:motion-sensor
+
+        - type: 'custom:button-card'
+          template: chip_mdi_icon_state
+          variables:
+            ulm_chip_mdi_icon_state_entity: binary_sensor.toilet_motion
+            ulm_chip_mdi_icon_state_icon: mdi:walk
+
 
     - type: vertical-stack
       cards:
@@ -43,6 +58,22 @@
               ulm_card_light_enable_popup: true
           {% endfor %}
 
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: Heating
+
+        - type: "custom:button-card"
+          template: card_climate
+          entity: climate.downstairs_toilet
+          variables:
+            ulm_card_thermostat_name: "Radiator"
+
+    - type: vertical-stack
+      cards:
+
         - type: custom:button-card
           template: card_title
           label: Environment
@@ -62,22 +93,6 @@
 
         - type: custom:button-card
           template: card_title
-          label: Sensors
-
-        - type: grid
-          columns: 2
-          square: false
-          cards:
-
-            - type: 'custom:button-card'
-              template: card_input_boolean
-              entity: input_boolean.downstairs_toilet_occupied
-              variables:
-                ulm_card_input_boolean_name: Occupied?
-                ulm_card_input_boolean_icon: mdi:toilet
-
-        - type: custom:button-card
-          template: card_title
           label: Batteries
 
         - type: grid
@@ -85,10 +100,11 @@
           square: false
           cards:
 
+            {% for x in batteries %}
             - type: custom:button-card
               template: card_battery
-              entity: sensor.downstairs_toilet_door_battery
+              entity: sensor.{{ x }}
               variables:
-                ulm_card_battery_name: Motion Sensor
                 ulm_card_battery_battery_level_danger: 10
                 ulm_card_battery_battery_level_warning: 30
+            {% endfor %}

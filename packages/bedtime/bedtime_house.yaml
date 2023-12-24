@@ -1,0 +1,105 @@
+# If guests are staying in any of the guest rooms, these sensor should be turned on to put that room into 'Guest' mode
+input_boolean:
+  guests_staying_bedroom_2:
+    name: Guests Staying
+    initial: off
+  guests_staying_man_cave:
+    name: Guests Staying Man Cave
+    initial: off
+  guests_staying_sarahs_office:
+    name: Guests Staying Sarah's Office
+    initial: off
+
+####
+# These input numbers keep track of the bedtime status of each room that might have people sleeping in it.
+# I'm using input numbers instead of input booleans because there are more than two states.
+# I can't use input selects because I want to be able to work out how many rooms have guests
+# and to work out from that which rooms have gone into 'bedtime' and 'asleep' mode so I'm adding them up.
+# 0 = It's day time or the room has no one sleeping in it.
+# 1 = It's bedtime. The lights will be triggered to 'Wind Down' mode as it's expected someone will be going to sleep soon.
+# 2 = This room has had it's status changed to Asleep. This is triggered when the lights in this room are turned off manually.
+
+input_number:
+  master_bedroom_bedtime_status:
+    name: Bedtime Status
+    initial: 0
+    min: 0
+    max: 2
+    step: 1
+  guest_bedroom_bedtime_status:
+    name: Bedtime Status (Guest Bedroom)
+    initial: 0
+    min: 0
+    max: 2
+    step: 1
+  man_cave_bedtime_status:
+    name: Bedtime Status (Man Cave)
+    initial: 0
+    min: 0
+    max: 2
+    step: 1
+  sarahs_office_bedtime_status:
+    name: Bedtime Status (Sarah's Office)
+    initial: 0
+    min: 0
+    max: 2
+    step: 1
+
+sensor:
+  # This template sensor works out how many rooms have people sleeping in them so that i can work out which rooms are 'asleep'
+  - platform: template
+    sensors:
+      total_bedrooms_in_use:
+        friendly_name: Total Bedrooms Being Slept In
+        value_template: >
+          {% set count = 0 %}
+          {% if is_state('input_boolean.guests_staying_bedroom_2', 'on') %}
+            {% set count = count + 1 %}
+          {% endif %}
+          {% if is_state('input_boolean.guests_staying_man_cave', 'on') %}
+            {% set count = count + 1 %}
+          {% endif %}
+          {% if is_state('input_boolean.guests_staying_sarahs_office', 'on') %}
+            {% set count = count + 1 %}
+          {% endif %}
+          {% if is_state('input_select.home_status', 'Home') %}
+            {% set count = count + 1 %}
+          {% endif %}
+          {{ count }}
+  # This template sensor keeps track of the bedtime status of all rooms
+  - platform: template
+    sensors:
+      bedtime_status_total:
+        friendly_name: Total Bedtime Status
+        value_template: >
+          {{ states('input_number.master_bedroom_bedtime_status') | int +
+             states('input_number.guest_bedroom_bedtime_status') | int +
+             states('input_number.man_cave_bedtime_status') | int +
+             states('input_number.sarahs_office_bedtime_status') | int }}
+
+automation:
+  - alias: Bedtime - Shut down house
+    id: "1702243441"
+    trigger:
+      - platform: state
+        entity_id: sensor.bedtime_status_total
+    condition:
+      condition: template
+      value_template: "{{ states('sensor.bedtime_status_total') | int == states('sensor.total_bedrooms_in_use') | int * 2 }}"
+    action:
+      # TODO: Add this in...
+      # - service: script.tts_engine
+      #   data_template:
+      #     media_player: media_player.master_bedroom_wifi
+      #     tts_message: >
+      #       {% if is_state('input_boolean.alarm_clock', 'on') %}
+      #       Your alarm is set for {{ states.sensor.alarm_time.state }}AM.
+      #       {% endif %}
+      #       Tomorrow the weather will be {{ states.sensor.darksky_summary_1d.state }} with highs of {{ states. sensor.darksky_daytime_high_temperature_1d.state }} degrees celcius.
+      - service: script.turn_on
+        entity_id: script.turn_off_all_hardware
+      - service: notify.mobile_app_matts_iphone
+        data:
+          title: Bedtime Shut Down
+          message: >
+            Good night

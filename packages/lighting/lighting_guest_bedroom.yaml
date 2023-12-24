@@ -1,0 +1,166 @@
+input_select:
+  guest_bedroom_light_mode:
+    name: Guest Bedroom Scene Selector
+    options:
+      - Adaptive
+      - Dreamy Dusk
+      - Honolulu
+      - Lake Placid
+      - Osaka
+      - Rolling Hills
+    initial: Adaptive
+    icon: mdi:lightbulb
+
+automation:
+  - alias: Guest Bedroom - Scene Cycle
+    id: "1701535904"
+    description: "Cycles through Guest Bedroom Scenes when Hue Switch 1 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "guest_bedroom_switch_button"
+          type: short_release
+          subtype: 1
+    action:
+      - service: input_select.select_next
+        entity_id: input_select.guest_bedroom_light_mode
+
+  - alias: Guest Bedroom - Force Adaptive Lighting
+    id: "1701535904b"
+    description: "Forces Adaptive Lighting in Guest Bedroom when Hue Switch 1 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "guest_bedroom_switch_button"
+          type: long_release
+          subtype: 1
+    action:
+      - service: input_select.select_option
+        entity_id: input_select.guest_bedroom_light_mode
+        data:
+          option: Adaptive
+
+  - alias: Guest Bedroom - Scene Set
+    id: "1701535904c"
+    description: "Sets the Guest Bedroom Scene when the Input Select is changed"
+    trigger:
+      - platform: state
+        entity_id: input_select.guest_bedroom_light_mode
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_select.guest_bedroom_light_mode
+                state: "Adaptive"
+            sequence:
+              - service: adaptive_lighting.set_manual_control
+                data:
+                  entity_id: switch.adaptive_lighting_guest_bedroom
+                  manual_control: false
+
+          - conditions:
+              - condition: template
+                value_template: "{{ not is_state('input_select.guest_bedroom_light_mode', 'Adaptive') }}"
+            sequence:
+              - service: scene.turn_on
+                data_template:
+                  entity_id: >
+                    scene.guest_bedroom_{{ states('input_select.guest_bedroom_light_mode') | lower | replace(' ', '_') }}
+
+  - alias: Guest Bedroom - Light Brightness up 5%
+    id: "1701535905"
+    description: "Turns Guest Bedroom Lights brightness up 5% when Hue Switch 2 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "guest_bedroom_switch_button"
+          type: short_release
+          subtype: 2
+    action:
+      - service: light.turn_on
+        entity_id: light.guest_bedroom
+        data:
+          brightness_step_pct: 5
+
+  - alias: Guest Bedroom - Light Brightness up continued
+    id: "1701535905b"
+    description: "Turns Guest Bedroom Lights brightness up 10% incrementally when Hue Switch 2 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "guest_bedroom_switch_button"
+          type: repeat
+          subtype: 2
+    action:
+      - service: light.turn_on
+        entity_id: light.guest_bedroom
+        data:
+          brightness_step_pct: 10
+
+  - alias: Guest Bedroom - Light Brightness down 5%
+    id: "1701535906"
+    description: "Turns Guest Bedroom Lights brightness down 5% when Hue Switch 3 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "guest_bedroom_switch_button"
+          type: short_release
+          subtype: 3
+    condition:
+      - condition: state
+        entity_id: light.guest_bedroom
+        state: "on"
+    action:
+      - service: light.turn_on
+        entity_id: light.guest_bedroom
+        data:
+          brightness_step_pct: -5
+
+  - alias: Guest Bedroom - Light Brightness down continued
+    id: "1701535906b"
+    description: "Turns Guest Bedroom Lights brightness down 10% incrementally when Hue Switch 3 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "guest_bedroom_switch_button"
+          type: repeat
+          subtype: 3
+    condition:
+      - condition: state
+        entity_id: light.guest_bedroom
+        state: "on"
+    action:
+      - service: light.turn_on
+        entity_id: light.guest_bedroom
+        data:
+          brightness_step_pct: -10
+
+  - alias: Guest Bedroom - Switch turn off lights
+    id: "1701535907"
+    description: "Turns off Guest Bedroom Lights when Hue Switch 4 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "guest_bedroom_switch_button"
+          type: short_release
+          subtype: 4
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "guest_bedroom_switch_button"
+          type: long_release
+          subtype: 4
+    condition:
+      - condition: state
+        entity_id: light.guest_bedroom
+        state: "on"
+    action:
+      - service: light.turn_off
+        entity_id: light.guest_bedroom

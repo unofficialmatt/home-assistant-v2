@@ -1,0 +1,27 @@
+calendar:
+  - platform: caldav
+    url: !secret icloud_cal_url
+    username: !secret icloud_email
+    password: !secret icloud_specific_password
+    custom_calendars:
+      #- name: "WFH"
+      #  calendar: "Work"
+      #  search: "WFH"
+      - name: "Matt In Office"
+        calendar: "Work"
+        search: "In Office"
+      #- name: "Joint"
+      #  calendar: "Joint"
+      #  search: ".*"
+      #- name: "Sarah"
+      #  calendar: "Sarah"
+      #  search: ".*"
+      #- name: "Matt"
+      #  calendar: "Home"
+      #  search: ".*"
+      #- name: "Holidays"
+      #  calendar: "Holidays"
+      #  search: ".*"
+      #- name: "Bins"
+      #  calendar: "Bins"
+      #  search: ".*"

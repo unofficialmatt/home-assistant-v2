@@ -1,6 +1,6 @@
 # lovelace_gen
 
-{% set xmas = [ 'star_lamp', 'fairy_lights', 'christmas_tree', 'christmas_window', 'christmas_wreath' ] %}
+{% set xmas = [  'christmas_tree', 'christmas_wreath' , 'christmas_window' , 'fairy_lights', 'christmas_outdoors' ] %}
 
 # TODO: Conditional card which shows Matt's commute if he is Working in office, in morning show Morning, in PM show PM.
 
@@ -9,8 +9,106 @@
   icon: mdi:castle
 
   cards:
+
     - type: vertical-stack
       cards:
+
+      {% raw %}
+        # TODO: Move this to a template or partial when done
+        - type: markdown
+          content : |
+            {% set current_hour = now().hour %}
+            {% if current_hour < 12 %}
+              {% set greeting = [
+              '🇬🇧  Good morning',
+              '🇫🇷  Bonjour',
+              '🇪🇸  Buenos días',
+              '🇩🇪  Guten Morgen',
+              '🇮🇹  Buongiorno'
+              ] | random
+               %}
+            {% elif current_hour < 18 %}
+              {% set greeting = [
+              '🇬🇧  Good evening',
+              '🇫🇷  Bonsoir',
+              '🇪🇸  Buenas noches',
+              '🇩🇪  Guten Abend',
+              'Buonasera'
+              ] | random
+               %}
+            {% elif current_hour < 23 %}
+              {% set greeting = [
+              '🇬🇧  Good afternoon',
+              '🇫🇷  Bon après-midi',
+              '🇪🇸  Buenas tardes',
+              '🇩🇪  Guten Tag',
+              '🇮🇹  Buon pomeriggio'
+              ] | random
+               %}
+            {% else %}
+              {% set greeting = [
+              '🇬🇧  Good night',
+              '🇫🇷  Bonne nuit',
+              '🇪🇸  Buenas noches',
+              '🇩🇪  Gute Nacht',
+              '🇮🇹  Buona notte'
+              ] | random
+               %}
+            {% endif %}
+
+            ## {{ greeting }}, {{ user }}!
+
+            {# Current Time and Date #}
+            {% set current_time = now().strftime('%H:%M') %}
+            {% set current_date = now().strftime('%A, %d %B %Y') %}
+
+            ## {{ current_date }}, {{ current_time }}
+
+            {# Bin Collection message... #}
+            {% if states('sensor.next_bin_collection') == '1' %}
+              <ha-alert> <ha-icon icon="mdi:trash-can"></ha-icon> It's <b>{{ states.sensor.next_bin_collection.attributes.type }}</b> day tomorrow... don't forget to take the bin out before bed.</ha-alert>
+            {% elif states('sensor.next_bin_collection') == '0' and current_hour < 12 %}
+              <ha-alert alert-type="error"> <ha-icon icon="mdi:trash-can"></ha-icon> It's <b>{{ states.sensor.next_bin_collection.attributes.type }}</b> day today! Take that bin out!</ha-alert>
+            {% endif %}
+
+            {# Matt's commute message... #}
+            {# TODO: Add a waze link #}
+            {%if is_state('calendar.work_matt_in_office', 'on') and is_state('person.matt', 'home') and is_state('binary_sensor.morning', 'on') %}
+              {% if states('sensor.travel_time_matt_commute_am') | int > 50 %}
+                {% set alert_type = 'error' %}
+              {% elif states('sensor.travel_time_matt_commute_am') | int > 40 %}
+                {% set alert_type = 'warning' %}
+              {% else %}
+                {% set alert_type = 'info' %}
+              {% endif %}
+              <ha-alert alert-type="{{alert_type}}"> <ha-icon icon="mdi:car"></ha-icon> Matt's commute to work is <b>{{ states('sensor.travel_time_matt_commute_am') }} minutes</b>.</ha-alert>
+            {% elif is_state('calendar.work_matt_in_office', 'on') and is_state('person.matt', 'work') and is_state('binary_sensor.evening', 'on') %}
+              <ha-alert> <ha-icon icon="mdi:car"></ha-icon> Matt's commute home is {{ states('sensor.travel_time_matt_commute_pm') }} minutes.</ha-alert>
+            {% endif %}
+
+            {# Cheapest fuel #}
+            {% set fuel_prices = {
+              states.sensor.fuel_price_tesco_bursledon.attributes.friendly_name: states('sensor.fuel_price_tesco_bursledon'),
+              states.sensor.fuel_price_bp_park_gate.attributes.friendly_name: states('sensor.fuel_price_bp_park_gate'),
+              states.sensor.fuel_price_shell_fareham.attributes.friendly_name: states('sensor.fuel_price_shell_fareham'),
+              states.sensor.fuel_price_tesco_winnall.attributes.friendly_name: states('sensor.fuel_price_tesco_winnall'),
+              states.sensor.fuel_price_tesco_whiteley.attributes.friendly_name: states('sensor.fuel_price_tesco_whiteley'),
+              } %}
+
+            {% set cheapest_fuel = fuel_prices.values() | min %}
+
+            {% for key, val in fuel_prices.items() %}
+              {% if val == cheapest_fuel %}
+            <ha-alert>
+            <ha-icon icon="mdi:gas-station"></ha-icon> The cheapest fuel in the area is <b>£{{ cheapest_fuel }}</b> at <b>{{ key.replace('Fuel Price - ', '') }}</b> <a href="/lovelace/debug">More info</a>
+            </ha-alert>
+              {% endif %}
+            {% endfor %}
+
+            {# Upcoming calendars #}
+
+      {% endraw %}
+
 
         - type: custom:button-card
           template: card_title
@@ -43,21 +141,141 @@
             #ulm_card_person_tablet_battery: sensor.sarah_ipad_battery_level
             #ulm_card_person_watch_battery: sensor.sarahs_apple_watch_battery
 
+
+    # SMART NOTIFICATIONS
+    # @See open issue at https://github.com/home-assistant/frontend/issues/6632 - there will be a less hacky way to do this in future, hopefully!
+    - type: custom:mod-card
+      card_mod:
+      style:
+        hui-horizontal-stack-card:
+          $: |
+            div {
+              flex-wrap: wrap;
+              row-gap: 8px
+            }
+      card:
+        type: horizontal-stack
+        cards:
+          - type: custom:mod-card
+            card_mod:
+              style: |
+                :host {
+                  flex: 0 0 auto !important;
+                }
+            card:
+              # MORNING COMMUTE
+              type: conditional
+              conditions:
+                - entity: calendar.work_matt_in_office
+                  state: 'on'
+                - entity: person.matt
+                  state: 'home'
+                - entity: binary_sensor.morning
+                  state: 'on'
+              card:
+                type: 'custom:button-card'
+                template: chip_icon_state
+                variables:
+                  ulm_chip_icon_state_icon: '🚗'
+                  ulm_chip_icon_state_entity: sensor.travel_time_matt_commute_am
+
+          - type: custom:mod-card
+            card_mod:
+              style: |
+                :host {
+                  flex: 0 0 auto !important;
+                }
+            card:
+              # EVENING COMMUTE
+              type: conditional
+              conditions:
+                - entity: calendar.work_matt_in_office
+                  state: 'on'
+                - entity: person.matt
+                  state: 'work'
+                - entity: binary_sensor.evening
+                  state: 'on'
+              card:
+                type: 'custom:button-card'
+                template: chip_icon_state
+                variables:
+                  ulm_chip_icon_state_icon: '🚗'
+                  ulm_chip_icon_state_entity: sensor.travel_time_matt_commute_pm
+
+          # BINS DUE TOMORROW
+          - type: custom:mod-card
+            card_mod:
+              style: |
+                :host {
+                  flex: 0 0 auto !important;
+                }
+            card:
+              type: conditional
+              conditions:
+                - entity: sensor.next_bin_collection
+                  state: '1'
+              card:
+                type: 'custom:button-card'
+                template: chip_garbage
+                entity: sensor.next_bin_collection
+
+          # BINS DUE TODAY
+          - type: custom:mod-card
+            card_mod:
+              style: |
+                :host {
+                  flex: 0 0 auto !important;
+                }
+            card:
+              type: conditional
+              conditions:
+                - entity: sensor.next_bin_collection
+                  state: '0'
+              card:
+                type: 'custom:button-card'
+                template: chip_garbage
+                entity: sensor.next_bin_collection
+
+
+
+
+
+    - type: vertical-stack
+      cards:
+
+
+        - type: "custom:button-card"
+          template: card_weather
+          entity: weather.weatherbit
+          variables:
+            ulm_card_weather_name: " "
+            ulm_card_weather_primary_info:
+              - wind_speed
+              - precipitation_probability
+            ulm_card_weather_secondary_info:
+              - humidity
+              - precipitation
+            ulm_card_weather_backdrop:
+              fade: true
+
+
+
+
     # TODO: Show memojies of guests present
+
 
     - type: vertical-stack
       cards:
 
         - type: custom:button-card
           template: card_title
-          label: "Rooms"
+          name: "Rooms"
+          label: "Downstairs"
 
         - type: grid
           columns: 2
           square: false
           cards:
-
-            # TODO: Add all rooms here when they have lights
 
             - type: 'custom:button-card'
               template:
@@ -67,6 +285,21 @@
               icon: mdi:sofa
               variables:
                 ulm_card_room_mini_path: '/lovelace/lounge/'
+                ulm_card_room_temperature_sensor: sensor.lounge_temperature
+                ulm_card_room_occupancy_sensor: binary_sensor.lounge_occupancy
+
+                # TODO: Add in Dining Room?
+
+            - type: 'custom:button-card'
+              template:
+                - room_mini
+              entity: light.nook
+              name: Nook
+              icon: mdi:rabbit
+              variables:
+                ulm_card_room_mini_path: '/lovelace/nook/'
+                ulm_card_room_temperature_sensor: sensor.nook_temperature
+                ulm_card_room_occupancy_sensor: binary_sensor.nook_occupancy
 
             - type: 'custom:button-card'
               template:
@@ -76,16 +309,8 @@
               icon: mdi:fridge
               variables:
                 ulm_card_room_mini_path: '/lovelace/kitchen/'
-                ulm_card_room_mini_label_sensor: '[[[ return "Temp: " + states["sensor.kitchen_sensor_temperature"].state + "°C" ]]]'
-
-            - type: 'custom:button-card'
-              template:
-                - room_mini
-              entity: light.master_bedroom
-              name: Master Bedroom
-              icon: mdi:bed-queen
-              variables:
-                ulm_card_room_mini_path: '/lovelace/bedroom/'
+                ulm_card_room_temperature_sensor: sensor.kitchen_temperature
+                ulm_card_room_occupancy_sensor: binary_sensor.kitchen_occupancy
 
             - type: 'custom:button-card'
               template:
@@ -95,78 +320,154 @@
               icon: mdi:toilet
               variables:
                 ulm_card_room_mini_path: '/lovelace/toilet/'
-                # TODO: Return 'Occupied' or 'Unoccupied'
-                # ulm_card_room_mini_label_sensor: '[[[ return "Temp: " + states["sensor.downstairs_toilet_door_temperature"].state + "°C" ]]]'
+                ulm_card_room_temperature_sensor: sensor.downstairs_toilet_temperature
+                ulm_card_room_occupancy_sensor: binary_sensor.toilet_occupancy
 
             - type: 'custom:button-card'
               template:
                 - room_mini
               entity: light.hallway
-              name: Hallways
+              name: Hallway
               icon: mdi:stairs
               variables:
                 ulm_card_room_mini_path: '/lovelace/hallways/'
 
+        - type: custom:button-card
+          template: card_title
+          label: "Upstairs"
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            - type: 'custom:button-card'
+              template:
+                - room_mini
+              entity: light.master_bedroom
+              name: Master Bedroom
+              icon: mdi:bed-queen
+              variables:
+                ulm_card_room_mini_path: '/lovelace/bedroom/'
+                ulm_card_room_temperature_sensor: sensor.master_bedroom_temperature
+                ulm_card_room_occupancy_sensor: binary_sensor.master_bedroom_occupancy
+
+            - type: 'custom:button-card'
+              template:
+                - room_mini
+              entity: light.guest_bedroom
+              name: Guest Bedroom
+              icon: mdi:bed-double
+              variables:
+                ulm_card_room_mini_path: '/lovelace/guest-bedroom/'
+                ulm_card_room_temperature_sensor: sensor.guest_bedroom_temperature
+                ulm_card_room_occupancy_sensor: binary_sensor.guest_bedroom_occupancy
+
+            - type: 'custom:button-card'
+              template:
+                - room_mini
+              entity: light.man_cave
+              name: Man Cave
+              icon: mdi:laptop
+              variables:
+                ulm_card_room_mini_path: '/lovelace/matt-office/'
+                ulm_card_room_temperature_sensor: sensor.man_cave_temperature
+                ulm_card_room_occupancy_sensor: binary_sensor.man_cave_occupancy
+
+            - type: 'custom:button-card'
+              template:
+                - room_mini
+              entity: light.sarahs_office
+              name: Sarah's Office
+              icon: mdi:monitor
+              variables:
+                ulm_card_room_mini_path: '/lovelace/sarah-office/'
+                ulm_card_room_temperature_sensor: sensor.sarahs_office_temperature
+                ulm_card_room_occupancy_sensor: binary_sensor.sarahs_office_occupancy
+
+            - type: 'custom:button-card'
+              template:
+                - room_mini
+              entity: light.landing
+              name: Landing
+              icon: mdi:stairs
+              variables:
+                ulm_card_room_mini_path: '/lovelace/hallways/'
+
+      # TODO: Add En suite and bathoom when ready
+
+      # TODO: Add Outdoors
+
+    # - type: vertical-stack
+    #   cards:
+
+    #     # TODO: Maybe move to this: https://github.com/twrecked/lovelace-hass-aarlo
+    #     - type: "custom:button-card"
+    #       entity: camera.aarlo_front_door
+    #       template: custom_card_camera
+    #       show_icon: true
+    #       variables:
+    #         ulm_custom_card_camera_title: true
+    #         ulm_custom_card_camera_name: Front Door
+    #         ulm_custom_card_camera_label: '[[[ return "Last Recording: " + states["sensor.aarlo_last_front_door"].state ]]]'
+
     - type: vertical-stack
       cards:
 
-        # TODO: Maybe move to this: https://github.com/twrecked/lovelace-hass-aarlo
-        - type: "custom:button-card"
-          entity: camera.aarlo_front_door
-          template: custom_card_camera
-          show_icon: true
-          variables:
-            ulm_custom_card_camera_title: true
-            ulm_custom_card_camera_name: Front Door
-            ulm_custom_card_camera_label: '[[[ return "Last Recording: " + states["sensor.aarlo_last_front_door"].state ]]]'
 
-    # CHRISTMAS
-    - type: vertical-stack
-      cards:
+        - type: custom:valetudo-map-card
+          vacuum: valetudo_roborock
+          title: ""
+          show_battery_level: false
+          show_status: false
+          show_start_button: false
+          show_pause_button: false
+          show_stop_button: false
+          show_home_button: false
+          show_locate_button: false
+          crop: "{top: 0, bottom: 20, left: 0, right: 0}"
 
         - type: "custom:button-card"
           template: card_vacuum
           entity: vacuum.valetudo_roborock
           variables:
             ulm_card_vacuum_name: Robbie the Rover
-            ulm_card_vacuum_camera: camera.rockrobo_map
-            ulm_card_vacuum_camera_toggle: true
 
-        - type: custom:auto-entities
-          card:
-            type: entities
-            state_color: true
-            title: Rooms to Vacuum
-          filter:
-            include:
-              - group: group.vacuum_rooms
-            exclude: []
-          show_empty: true
-          sort:
-            method: friendly_name
-            reverse: false
-            numeric: false
-        - type: custom:button-card
-          tap_action:
-            action: call-service
-            service: script.vacuum_clean_segments
-            # confirmation: true
-            service_data: {}
-            target: {}
-          lock:
-            enabled: >-
-              [[[return states['group.vacuum_rooms'].state !== 'on' ||
-              states['vacuum.valetudo_roborock'].state !== 'docked']]]
-            exemptions: []
-          entity: script.vacuum_clean_segments
-          name: Vacuum selected segments
-          show_state: false
-          show_icon: false
+        # - type: custom:auto-entities
+        #   card:
+        #     type: entities
+        #     state_color: true
+        #     title: Rooms to Vacuum
+        #   filter:
+        #     include:
+        #       - group: group.vacuum_rooms
+        #     exclude: []
+        #   show_empty: true
+        #   sort:
+        #     method: friendly_name
+        #     reverse: false
+        #     numeric: false
+        # - type: custom:button-card
+        #   tap_action:
+        #     action: call-service
+        #     service: script.vacuum_clean_segments
+        #     # confirmation: true
+        #     service_data: {}
+        #     target: {}
+        #   lock:
+        #     enabled: >-
+        #       [[[return states['group.vacuum_rooms'].state !== 'on' ||
+        #       states['vacuum.valetudo_roborock'].state !== 'docked']]]
+        #     exemptions: []
+        #   entity: script.vacuum_clean_segments
+        #   name: Vacuum selected segments
+        #   show_state: false
+        #   show_icon: false
 
 
         - type: conditional
           conditions:
-            - entity: sensor.month
+            - entity: sensor.current_month
               state: '12'
           card:
             type: vertical-stack
@@ -189,18 +490,31 @@
                 entity: switch.{{ x }}
               {% endfor %}
 
-              - type: custom:button-card
-                template:
-                  - card_generic_swap
-                  - icon_info_bg
-                  - blue
-                entity: automation.christmas_lights_on_evening
-                name: On PM
+              # - type: custom:button-card
+              #   template:
+              #     - card_generic_swap
+              #     - icon_info_bg
+              #     - blue
+              #   entity: automation.christmas_lights_on_evening
+              #   name: On PM
 
-              - type: custom:button-card
-                template:
-                  - card_generic_swap
-                  - icon_info_bg
-                  - blue
-                entity: automation.christmas_lights_on_morning
-                name: On AM
+              # - type: custom:button-card
+              #   template:
+              #     - card_generic_swap
+              #     - icon_info_bg
+              #     - blue
+              #   entity: automation.christmas_lights_on_morning
+              #   name: On AM
+
+    # - type: vertical-stack
+    #   cards:
+
+    #     - type: custom:button-card
+    #       template: card_title
+    #       label: Heating
+
+    #     - type: "custom:button-card"
+    #       template: card_climate
+    #       entity: climate.hive_thermostat
+    #       variables:
+    #         ulm_card_thermostat_name: "Central Heating"

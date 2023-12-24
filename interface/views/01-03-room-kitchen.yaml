@@ -1,5 +1,6 @@
 # lovelace_gen
 {% set lights = [ 'kitchen_1', 'kitchen_2','kitchen_3','kitchen_4','kitchen_5', 'kitchen_6','kitchen_7','kitchen_8', ] %}
+{% set batteries = [ 'kitchen_sensor_battery', 'kitchen_radiator_battery_level' ] %}
 
 - title: Kitchen
   path: kitchen
@@ -9,13 +10,15 @@
 
     - type: horizontal-stack
       cards:
-        - !include ../chips/back.yaml
+        - !include ../chips/chip_back.yaml
+        - type: 'custom:button-card'
+          template: chip_occupancy
+          entity: binary_sensor.kitchen_occupancy
         - type: custom:button-card
           template: chip_vacuum_room
           variables:
             ulm_card_segments: '["16"]'
             ulm_card_iterations: '2'
-
         #- !include ../chips/presence.yaml
         #- !include ../chips/wifi.yaml
         # - !include ../chips/spotify.yaml
@@ -47,6 +50,19 @@
               ulm_card_light_enable_popup: true
           {% endfor %}
 
+
+    - type: vertical-stack
+      cards:
+
+        - type: custom:button-card
+          template: card_title
+          label: Heating
+
+        - type: "custom:button-card"
+          template: card_climate
+          entity: climate.kitchen
+          variables:
+            ulm_card_thermostat_name: "Radiator"
 
     - type: vertical-stack
       cards:
@@ -93,6 +109,9 @@
                 ulm_card_graph_name: Light
                 ulm_card_graph_entity: sensor.kitchen_sensor_illuminance
 
+    - type: vertical-stack
+      cards:
+
         - type: custom:button-card
           template: card_title
           label: Batteries
@@ -102,10 +121,12 @@
           square: false
           cards:
 
+# TODO: FIND A BETTER WAY TO NAME THESE WITH THE LOOP
+            {% for x in batteries %}
             - type: custom:button-card
               template: card_battery
-              entity: sensor.kitchen_sensor_battery
+              entity: sensor.{{ x }}
               variables:
-                ulm_card_battery_name: Motion Sensor
                 ulm_card_battery_battery_level_danger: 10
                 ulm_card_battery_battery_level_warning: 30
+            {% endfor %}
