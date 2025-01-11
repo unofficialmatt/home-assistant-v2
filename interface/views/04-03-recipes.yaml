@@ -1,0 +1,116 @@
+# lovelace_gen
+{% set recipes = [ 'minus_3_days', 'minus_2_days', 'minus_1_days', 'today', '1_day' , '2_days', '3_days', '4_days', '5_days', '6_days' ] %}
+
+- title: Recipe
+  path: recipes
+  icon: mdi:food
+  type: custom:grid-layout
+  layout:
+    grid-gap: 20px 40px
+    margin: 20px
+    grid-template-columns: 2.25fr 1fr
+    grid-template-areas: |
+      "selector selector"
+      "title title"
+      "left right"
+    mediaquery:
+      "(max-width: 800px)":
+        grid-template-columns: 1fr
+        grid-template-areas: |
+          "title"
+          "left"
+          "right"
+          "selector"
+  visible: false
+  cards:
+
+    - type: custom:mod-card
+      view_layout:
+        grid-area: selector
+      card:
+        type: grid
+        columns: 1
+        square: false
+        cards:
+          {% for recipe in recipes %}
+          - type: conditional
+            conditions:
+              - entity: sensor.paprika_{{ recipe }}
+                state_not: "unknown"
+            card:
+              type: custom:decluttering-card
+              template: mushroom_recipe_selector
+              variables:
+                - recipe: {{ recipe }}
+          {% endfor %}
+      card_mod:
+        style:
+          hui-grid-card$ : |
+            @media(min-width: 400px) {
+              #root {
+                --grid-card-column-count: 2 !important;
+              }
+            }
+            @media(min-width: 600px) {
+              #root {
+                --grid-card-column-count: 3 !important;
+              }
+            }
+            @media(min-width: 900px) {
+              #root {
+                --grid-card-column-count: 4 !important;
+              }
+            }
+            @media(min-width: 1200px) {
+              #root {
+                --grid-card-column-count: 5 !important;
+              }
+            }
+
+    - type: custom:state-switch
+      entity: hash
+      default: today
+      view_layout:
+        grid-area: title
+      states:
+        {% for recipe in recipes %}
+        {{ recipe }}:
+          type: custom:decluttering-card
+          template: mushroom_recipe_title
+          variables:
+            - recipe: {{ recipe }}
+        {% endfor %}
+
+    - type: custom:state-switch
+      entity: hash
+      default: today
+      view_layout:
+        grid-area: right
+      states:
+        {% for recipe in recipes %}
+        {{ recipe }}:
+          type: vertical-stack
+          cards:
+            - type: custom:button-card
+              entity: sensor.paprika_{{ recipe }}
+              template: recipe_ingredients
+            - type: custom:decluttering-card
+              template: mushroom_recipe_remove
+              variables:
+                - recipe: {{ recipe }}
+        {% endfor %}
+
+    - type: custom:state-switch
+      entity: hash
+      default: today
+      view_layout:
+        grid-area: left
+      states:
+        {% for recipe in recipes %}
+        {{ recipe }}:
+          type: custom:button-card
+          entity: sensor.paprika_{{ recipe }}
+          template: recipe_method
+        {% endfor %}
+
+# TODO: BE NICE IF ACTVE ONE WAS HIGHLIGHTED IN SELECTOR GRID

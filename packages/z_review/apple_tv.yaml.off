@@ -1,0 +1,4 @@
+# https://www.reddit.com/r/homeassistant/comments/x2wvef/what_do_you_use_your_appletv_for_in_home_assistant/
+# https://www.home-assistant.io/integrations/apple_tv/
+
+# TODO: WHEN media_player.apple_tv_lounge is on and it's after sunset, turn on immersvie mode if we are watching plex?

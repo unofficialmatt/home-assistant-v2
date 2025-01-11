@@ -1,0 +1,739 @@
+# TODO: Add some graphs from https://github.com/matt8707/ha-fusion?
+# WASHING MACHINE IS ON?
+# TODO: Add calendar
+
+mushroom_sidebar:
+  card:
+    type: vertical-stack
+    cards:
+      - type: custom:mushroom-template-card
+        primary: >
+          {% set time = now().hour %}
+            {% set emoji = '' %}
+            {% set greeting = '' %}
+
+            {% if time <= 5 %}
+              {% set greeting = [
+                'Good night', 'Bonne nuit', 'Buenas noches', 'Gute Nacht', 'Buona notte',
+                'Wǎn\'ān', 'Oyasuminasai', 'Annyeonghi jumuseyo', 'Dobroy nochi',
+                'Shubho ratri', 'Shubh ratri', 'Masa al-khayr', 'Shab bekheir',
+                'Selamat malam', 'Boa noite', 'Laila tov', 'Siku njema', 'Chúc ngủ ngon', 'Iniya iravu',
+                'Góóde Nacht' ] | random %}
+            {% elif time <= 12 %}
+              {% set greeting = [
+                'Good morning', 'Bonjour', 'Buenos días', 'Guten Morgen', 'Buongiorno',
+                'Zǎoshang hǎo', 'Ohayou gozaimasu', 'Joeun achimimnida', 'Dobroe utro',
+                'Shubho shokal', 'Suprabhat', 'Sabah al-khayr', 'Sobh bekheir',
+                'Selamat pagi', 'Bom dia', 'Boker tov', 'Habari ya asubuhi', 'Chào buổi sáng', 'Kaalai vanakkam',
+                'Goeije moar\'n' ] | random %}
+            {% elif time <= 17 %}
+              {% set greeting = [
+                'Good afternoon', 'Bon après-midi', 'Buenas tardes', 'Guten Tag', 'Buon pomeriggio',
+                'Xiàwǔ hǎo', 'Konnichiwa', 'Annyeonghaseyo', 'Dobry den',
+                'Shubho aoporahon', 'Namaskar', 'Masa al-khayr', 'Asr bekheir',
+                'Selamat siang', 'Boa tarde', 'Tzohoraim tovim', 'Habari za mchana', 'Chào buổi chiều', 'Maalai vanakkam',
+                'Goei\'n middag' ] | random %}
+            {% else %}
+              {% set greeting = [
+                'Good evening', 'Bonsoir', 'Buenas noches', 'Guten Abend', 'Buonasera',
+                'Wǎnshang hǎo', 'Konbanwa', 'Annyeonghaseyo', 'Dobry vecher',
+                'Shubho sondhya', 'Shubh sandhya', 'Masa al-khayr', 'Asr bekheir',
+                'Selamat malam', 'Boa noite', 'Erev tov', 'Habari za jioni', 'Chào buổi tối', 'Maalai vanakkam',
+                'Goei\'n avond' ] | random %}
+            {% endif %}
+
+            {% if   time <= 1 %}  {% set emoji = '\U0001F611' %}
+            {% elif time <= 3 %}  {% set emoji = '\U0001F62A' %}
+            {% elif time <= 5 %}  {% set emoji = '\U0001F634' %}
+            {% elif time <= 7 %}  {% set emoji = '\U0001F4A9' %}
+            {% elif time <= 9 %}  {% set emoji = '\u2615\uFE0F' %}
+            {% elif time <= 10 %} {% set emoji = '\U0001F642' %}
+            {% elif time <= 13 %} {% set emoji = '\U0001F60A' %}
+            {% elif time <= 15 %} {% set emoji = '\U0001F60E' %}
+            {% elif time <= 17 %} {% set emoji = '\U0001F44B\U0001F3FB' %}
+            {% elif time <= 19 %} {% set emoji = '\U0001F44B\U0001F3FB' %}
+            {% elif time <= 22 %} {% set emoji = '\U0001F60C' %}
+            {% elif time <= 23 %} {% set emoji = '\U0001F974' %}
+            {% else %}            {% set emoji = '\U0001F974' %}
+            {% endif %}
+
+            {{emoji}} {{ greeting }}, {{ user }}!
+        tap_action:
+          action: none
+        double_tap_action:
+          action: none
+        hold_action:
+          action: none
+        card_mod:
+          style:
+            mushroom-state-item$: |
+              .container {
+                padding: 0px 4px 4px 4px !important;
+              }
+            mushroom-state-info$: |
+              .primary {
+                --card-primary-font-size: 2.5rem;
+                --card-primary-line-height: 1.1 !important;
+                white-space: normal !important;
+                font-weight: 400 !important;
+              }
+            .: |
+              ha-card {
+                background: transparent;
+                box-shadow: none;
+                padding: 0px;
+                margin: 0px;
+              }
+
+      # TODO: Batteries that need charging
+      # battery: >
+      #   {% set entities = states.sensor
+      #     | selectattr('entity_id', 'search', 'battery')
+      #     | rejectattr('entity_id', 'search', 'iphone')
+      #     | map(attribute = 'entity_id') | list %}
+      #   {% for sensor in entities if states(sensor) != 'unknown' and states(sensor) !=
+      #   'unavailable' and states(sensor) != 'None' and states(sensor) | int(default=0) <= 5 %}
+      #     {% if loop.first %} {{'\u26A0\uFE0F'}} Battery {% else %}, {% endif %}
+      #     {{ state_attr(sensor, 'friendly_name') }} {{ states(sensor) }}%
+      #   {% endfor %}
+
+      - type: conditional
+        conditions:
+          - condition: and
+            conditions:
+              - entity: calendar.work_matt_in_office
+                state: "on"
+              - entity: person.matt
+                state: "home"
+              - condition: time
+                after: "06:00:00"
+                before: "09:00:00"
+        card:
+          type: custom:mushroom-template-card
+          primary: "{{states('sensor.travel_time_matt_commute_am')}} mins"
+          secondary: "Matt's Commute to Work"
+          badge_color: red
+          badge_icon: >
+            {% if states('sensor.travel_time_matt_commute_am') | int > 50 %}
+              mdi:exclamation-thick
+            {% endif %}
+          icon: mdi:car
+          icon_color: >
+            {% if states('sensor.travel_time_matt_commute_am') | int > 50 %}
+              red
+            {% elif states('sensor.travel_time_matt_commute_am') | int > 40 %}
+              orange
+            {% else %}
+              green
+            {% endif %}
+          tap_action:
+            action: url
+            url_path: waze://?favorite=work
+          double_tap_action:
+            action: none
+          hold_action:
+            action: none
+          card_mod:
+            style:
+              mushroom-state-item$: |
+                .container {
+                  padding: 0px 4px 4px 4px !important;
+                }
+              mushroom-shape-icon$: |
+                .shape {
+                  --icon-symbol-size: 20px;
+                  --icon-size: 28px;
+                }
+              .: |
+                ha-card {
+                  background: transparent;
+                  box-shadow: none;
+                  padding: 0px;
+                  margin: 0px;
+                }
+
+      - type: conditional
+        conditions:
+          - condition: and
+            conditions:
+              - entity: calendar.work_matt_in_office
+                state: "on"
+              - entity: person.matt
+                state: "work"
+              - condition: time
+                after: "12:00:00"
+                before: "21:00:00"
+        card:
+          type: custom:mushroom-template-card
+          primary: "{{states('sensor.travel_time_matt_commute_pm')}} mins"
+          secondary: "Matt's Commute Home"
+          badge_color: red
+          badge_icon: >
+            {% if states('sensor.travel_time_matt_commute_pm') | int > 50 %}
+              mdi:exclamation-thick
+            {% endif %}
+          icon: mdi:car
+          icon_color: >
+            {% if states('sensor.travel_time_matt_commute_pm') | int > 50 %}
+              red
+            {% elif states('sensor.travel_time_matt_commute_pm') | int > 40 %}
+              orange
+            {% else %}
+              green
+            {% endif %}
+          tap_action:
+            action: url
+            url_path: waze://?favorite=home
+          double_tap_action:
+            action: none
+          hold_action:
+            action: none
+          card_mod:
+            style:
+              mushroom-state-item$: |
+                .container {
+                  padding: 0px 4px 4px 4px !important;
+                }
+              mushroom-shape-icon$: |
+                .shape {
+                  --icon-symbol-size: 20px;
+                  --icon-size: 28px;
+                }
+              .: |
+                ha-card {
+                  background: transparent;
+                  box-shadow: none;
+                  padding: 0px;
+                  margin: 0px;
+                }
+
+      - type: conditional
+        conditions:
+          - condition: or
+            conditions:
+              - entity: sensor.next_bin_collection
+                condition: state
+                state: "1"
+              - entity: sensor.next_bin_collection
+                condition: state
+                state: "0"
+        card:
+          type: custom:mushroom-template-card
+          primary: "{{state_attr('sensor.next_bin_collection','type')}}"
+          secondary: "Tomorrow"
+          icon: mdi:trash-can
+          badge_color: >
+            {% if states('sensor.next_bin_collection') == '0' %}
+              red
+            {% else %}
+              orange
+            {% endif %}
+          badge_icon: mdi:exclamation-thick
+          icon_color: >
+            {% if state_attr('sensor.next_bin_collection','type') == 'Recycling' %}
+              blue
+            {% else %}
+              green
+            {% endif %}
+          tap_action:
+            action: none
+          double_tap_action:
+            action: none
+          hold_action:
+            action: none
+          card_mod:
+            style:
+              mushroom-state-item$: |
+                .container {
+                  padding: 0px 4px 4px 4px !important;
+                }
+              mushroom-shape-icon$: |
+                .shape {
+                  --icon-symbol-size: 20px;
+                  --icon-size: 28px;
+                }
+              .: |
+                ha-card {
+                  background: transparent;
+                  box-shadow: none;
+                  padding: 0px;
+                  margin: 0px;
+                }
+
+      - type: conditional
+        conditions:
+          - condition: and
+            conditions:
+              - entity: sensor.paprika_today
+                condition: state
+                state_not: "unknown"
+              # - condition: time
+              #   before: "19:00:00"
+        card:
+          type: custom:mushroom-template-card
+          primary: "{{state_attr('sensor.paprika_today','name')}}"
+          secondary: "Today's Dinner"
+          icon: mdi:food
+          icon_color: green
+          tap_action:
+            action: navigate
+            navigation_path: /lovelace/recipes/
+          double_tap_action:
+            action: none
+          hold_action:
+            action: none
+          card_mod:
+            style:
+              mushroom-state-info$: |
+                .primary {
+                  white-space: normal !important;
+                }
+                .secondary {
+                  white-space: normal !important;
+                }
+              mushroom-state-item$: |
+                .container {
+                  padding: 0px 4px 4px 4px !important;
+                }
+              mushroom-shape-icon$: |
+                .shape {
+                  --icon-symbol-size: 20px;
+                  --icon-size: 28px;
+                }
+              .: |
+                ha-card {
+                  background: transparent;
+                  box-shadow: none;
+                  padding: 0px;
+                  margin: 0px;
+                }
+
+      - type: custom:mushroom-template-card
+        primary: "{{states('sensor.pirateweather_summary')}}"
+        secondary: >
+          {% set forecast = states('sensor.pirateweather_temperature') + '°C' %}
+
+          {% if not is_state('sensor.pirateweather_apparent_temperature', 'unknown') %}
+            {% set temp = states('sensor.pirateweather_apparent_temperature')  %}
+            {% set forecast = forecast + '; feels like ' + temp + '°C' %}
+          {% endif %}
+
+          {% if not is_state('sensor.pirateweather_precip_probability', 'unknown') %}
+            {% set precip_prob = states('sensor.pirateweather_precip_probability')  | round %}
+            {% if precip_prob > 10 %}
+              {% set forecast = forecast + ' with a ' + precip_prob | string + '% chance of rain.' %}
+            {% else %}
+                {% set forecast = forecast + '.' %}
+            {% endif %}
+          {% endif %}
+
+          {% set cloud_coverage = 'sensor.pirateweather_cloud_coverage' %}
+          {% if not is_state(cloud_coverage, 'unknown') %}
+            {% set cloud_coverage_state = states(cloud_coverage) | float | round(0) %}
+            {% set forecast = forecast + ' Cloud coverage is ' + cloud_coverage_state | string + '%' %}
+          {% endif %}
+
+          {% if not is_state('weather.pirateweather', 'unknown') %}
+            {% set wind_speed = state_attr('weather.pirateweather', 'wind_speed') %}
+            {% if wind_speed | round > 10 %}
+              {% set forecast = forecast + ' with winds up to ' + wind_speed | string + 'mph.' %}
+            {% else %}
+                {% set forecast = forecast + '.' %}
+            {% endif %}
+          {% endif %}
+
+          {{forecast}}
+        badge_icon: >-
+          {% if(
+          states('sensor.pirateweather_precip_probability') | float >= 50
+          or states('sensor.pirateweather_apparent_temperature') | float <= 2
+          ) %}
+            mdi:exclamation-thick
+          {% else %}
+          {% endif %}
+        badge_color: red
+        icon: >-
+          {% if(states('sensor.pirateweather_precip_probability') | float >= 50) %}
+            mdi:weather-rainy
+          {% elif(states('weather.pirateweather') == 'clear-night') %}
+            mdi:weather-night
+          {% elif(states('weather.pirateweather') == 'clear') %}
+            mdi:weather-sunny
+          {% elif(states('weather.pirateweather') == 'cloudy') %}
+            mdi:weather-cloudy
+          {% elif(states('weather.pirateweather') == 'fog') %}
+            mdi:weather-fog
+          {% elif(states('weather.pirateweather') == 'hail') %}
+            mdi:weather-hail
+          {% elif(states('weather.pirateweather') == 'lightning') %}
+            mdi:weather-lightning
+          {% elif(states('weather.pirateweather') == 'lightning-rainy') %}
+            mdi:weather-lightning-rainy
+          {% elif(states('weather.pirateweather') == 'partlycloudy') %}
+            mdi:weather-partly-cloudy
+          {% elif(states('weather.pirateweather') == 'pouring') %}
+            mdi:weather-pouring
+          {% elif(states('weather.pirateweather') == 'rainy') %}
+            mdi:weather-rainy
+          {% elif(states('weather.pirateweather') == 'snowy') %}
+            mdi:weather-snowy
+          {% elif(states('weather.pirateweather') == 'snowy-rainy') %}
+            mdi:weather-snowy-rainy
+          {% elif(states('weather.pirateweather') == 'sunny') %}
+            mdi:weather-sunny
+          {% elif(states('weather.pirateweather') == 'windy') %}
+            mdi:weather-windy
+          {% elif(states('weather.pirateweather') == 'windy-variant') %}
+            mdi:weather-windy-variant
+          {% else %}
+            mdi:weather-sunny
+          {% endif %}
+        tap_action:
+          action: fire-dom-event
+          browser_mod:
+            service: browser_mod.popup
+            data:
+              title: "Weather Forecast"
+              content:
+                type: custom:decluttering-card
+                template: mushroom_weather_stack
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        card_mod:
+          style:
+            mushroom-state-info$: |
+              .secondary {
+                white-space: normal !important;
+              }
+            mushroom-state-item$: |
+              .container {
+                padding: 0px 4px 4px 4px !important;
+              }
+            mushroom-shape-icon$: |
+              .shape {
+                --icon-symbol-size: 20px;
+                --icon-size: 28px;
+              }
+            .: |
+              ha-card {
+                background: transparent;
+                box-shadow: none;
+                padding: 0px;
+                margin: 0px;
+              }
+
+      - type: conditional
+        conditions:
+          - condition: or
+            conditions:
+              - entity: media_player.spotify
+                state: "playing"
+              - entity: media_player.spotify
+                state: "paused"
+        card:
+          type: custom:mushroom-template-card
+          primary: "Now playing: {{state_attr('media_player.spotify','media_title')}}"
+          secondary: "{{state_attr('media_player.spotify','media_artist')}}"
+          icon: mdi:spotify
+          badge_color: >
+            {% if states('media_player.spotify') == 'playing' %}
+              green
+            {% else %}
+              orange
+            {% endif %}
+          badge_icon: >
+            {% if states('media_player.spotify') == 'playing' %}
+              mdi:play
+            {% else %}
+              mdi:pause
+            {% endif %}
+          tap_action:
+            action: fire-dom-event
+            browser_mod:
+              service: browser_mod.popup
+              data:
+                title: Spotify
+                content:
+                  type: custom:decluttering-card
+                  template: mushroom_spotify_stack
+          card_mod:
+            style:
+              mushroom-state-item$: |
+                .container {
+                  padding: 0px 4px 4px 4px !important;
+                }
+              mushroom-shape-icon$: |
+                .shape {
+                  --icon-symbol-size: 20px;
+                  --icon-size: 28px;
+                }
+              mushroom-state-info$: |
+                .secondary {
+                  white-space: normal !important;
+                }
+              .: |
+                ha-card {
+                  background: transparent;
+                  box-shadow: none;
+                  padding: 0px;
+                  margin: 0px;
+                }
+
+      - type: custom:mushroom-template-card
+        entity: sensor.exchange_rate_1_btc
+        primary: "£{{states('sensor.exchange_rate_1_btc')}}"
+        secondary: "BTC-GBP"
+        icon: mdi:currency-btc
+        tap_action:
+          action: fire-dom-event
+          browser_mod:
+            service: browser_mod.popup
+            data:
+              title: "BTC-GBP"
+              content:
+                type: custom:vertical-stack-in-card
+                card_mod:
+                  style: |
+                    ha-card {
+                      box-shadow: none;
+                      margin-left: -8px;
+                      margin-right: -8px;
+                      margin-bottom: -20px;
+                    }
+                cards:
+                  - type: custom:mini-graph-card
+                    entities:
+                      - entity: sensor.exchange_rate_1_btc
+                        name: "BTC-GBP"
+                        color: var(--blue-color)
+                    hours_to_show: 24
+                    line_width: 3
+                    font_size: 50
+                    animate: false
+                    name: "Today"
+                    show:
+                      name: true
+                      icon: false
+                      state: false
+                      legend: false
+                      fill: fade
+                  - type: custom:mini-graph-card
+                    entities:
+                      - entity: sensor.exchange_rate_1_btc
+                        name: "BTC-GBP"
+                        color: var(--green-color)
+                    hours_to_show: 168
+                    line_width: 3
+                    font_size: 50
+                    animate: false
+                    name: "Last Week"
+                    show:
+                      name: true
+                      icon: false
+                      state: false
+                      legend: false
+                      fill: fade
+        double_tap_action:
+          action: none
+        card_mod:
+          style:
+            mushroom-state-item$: |
+              .container {
+                padding: 0px 4px 4px 4px !important;
+              }
+            mushroom-shape-icon$: |
+              .shape {
+                --icon-symbol-size: 20px;
+                --icon-size: 28px;
+              }
+            .: |
+              ha-card {
+                background: transparent;
+                box-shadow: none;
+                padding: 0px;
+                margin: 0px;
+              }
+
+      - type: conditional
+        conditions:
+          - entity: vacuum.valetudo_roborock
+            state_not: "unknown"
+        card:
+          type: custom:mushroom-template-card
+          entity: vacuum.valetudo_roborock
+          primary: "Robbie the Rover"
+          secondary: "{{states('vacuum.valetudo_roborock')}}"
+          # TODO: Secondary should show the time the hoover last cleaned
+          # TODO: Badge if the vacuum is cleaning
+          icon: mdi:robot-vacuum
+          tap_action:
+            action: fire-dom-event
+            browser_mod:
+              service: browser_mod.popup
+              data:
+                title: "Robbie the Rover"
+                content:
+                  type: custom:decluttering-card
+                  template: mushroom_vacuum
+          double_tap_action:
+            action: none
+          card_mod:
+            style:
+              mushroom-state-item$: |
+                .container {
+                  padding: 0px 4px 4px 4px !important;
+                }
+              mushroom-shape-icon$: |
+                .shape {
+                  --icon-symbol-size: 20px;
+                  --icon-size: 28px;
+                }
+              .: |
+                ha-card {
+                  background: transparent;
+                  box-shadow: none;
+                  padding: 0px;
+                  margin: 0px;
+                }
+
+      - type: conditional
+        conditions:
+          - entity: input_boolean.alarm_clock
+            condition: state
+            state: "on"
+        card:
+          type: custom:mushroom-template-card
+          primary: "Alarm: {{states('input_datetime.alarm_time')}}"
+          secondary: "Tap to adjust"
+          icon: mdi:alarm
+          tap_action:
+            action: fire-dom-event
+            browser_mod:
+              service: browser_mod.popup
+              data:
+                title: "Alarm Clock"
+                content:
+                  type: custom:vertical-stack-in-card
+                  card_mod:
+                    style: |
+                      ha-card {
+                        box-shadow: none;
+                      }
+                  cards:
+                    - type: custom:decluttering-card
+                      template: mushroom_boolean
+                      variables:
+                        - entity_id: input_boolean.alarm_clock
+                        - title: Alarm Clock
+                        - icon: mdi:alarm
+                    - type: conditional
+                      conditions:
+                        - entity: input_boolean.alarm_clock
+                          state: "on"
+                      card:
+                        type: custom:decluttering-card
+                        template: mushroom_datetime
+                        variables:
+                          - entity: alarm_time
+                    - type: conditional
+                      conditions:
+                        - entity: input_boolean.alarm_clock
+                          state: "on"
+                      card:
+                        type: custom:decluttering-card
+                        template: mushroom_datetime
+                        variables:
+                          - entity: alarm_weekday
+                    - type: conditional
+                      conditions:
+                        - entity: input_boolean.alarm_clock
+                          state: "on"
+                      card:
+                        type: custom:decluttering-card
+                        template: mushroom_datetime
+                        variables:
+                          - entity: alarm_weekend
+          double_tap_action:
+            action: none
+          card_mod:
+            style:
+              mushroom-state-item$: |
+                .container {
+                  padding: 0px 4px 4px 4px !important;
+                }
+              mushroom-shape-icon$: |
+                .shape {
+                  --icon-symbol-size: 20px;
+                  --icon-size: 28px;
+                }
+              .: |
+                ha-card {
+                  background: transparent;
+                  box-shadow: none;
+                  padding: 0px;
+                  margin: 0px;
+                }
+          # TODO:
+          # active: >
+          #   {% set lights = [
+          #     states.light.porch,
+          #     states.light.hallway,
+          #     states.light.kitchen,
+          #     states.light.lounge,
+          #     states.light.lounge,
+          #   ] %}
+
+          #   {% set devices = [
+          #     states.switch.imac,
+          #     states.switch.ps5_635_power,
+          #     states.switch.gosund_monitors_switch,
+          #     states.switch.gosund_fan_switch,
+          #     states.media_player.samsung,
+          #     states.media_player.sony_bravia_tv,
+          #     states.climate.ac
+          #   ] %}
+
+          #   {% set lights_on = lights | selectattr('state','eq','on') | list %}
+          #   {% set lights_name = lights | selectattr('state','eq','on') | map(attribute='name') | join(', ') %}
+
+          #   {% set devices_on = devices | selectattr('state','search','(on|cool|fan_only|playing)') | list %}
+          #   {% set devices_name = devices_on | map(attribute='name') | join(', ') %}
+
+          #   {% if (lights_on | length == 0) and (devices_on | length > 0) %}
+          #     {{ devices_name | regex_replace(',([^,]*)$',' and\\1') }} are on
+
+          #   {% elif (lights_on | length == 1) and (devices_on | length == 1) %}
+          #     {{ lights_name }} and {{devices_name }} are on
+
+          #   {% elif (lights_on | length == 1) and (devices_on | length > 1) %}
+          #     {{ lights_name }}, {{ devices_name | regex_replace(',([^,]*)$',' and\\1') }} are on
+
+          #   {% elif (lights_on | length > 1) and (devices_on | length == 1) %}
+          #     {{ lights_on | length }} lights and {{ devices_name }} are on
+
+          #   {% elif (lights_on | length > 1) and (devices_on | length > 1) %}
+          #     {{ lights_on | length }} lights, {{ devices_name | regex_replace(',([^,]*)$',' and\\1') }} are on
+
+          #   {% elif (lights_on | length == 1) and (devices_on | length == 0) %}
+          #     {{ lights_name }} light is on
+
+          #   {% elif (lights_on | length > 1) and (devices_on | length == 0) %}
+          #     {{ lights_on | length }} lights are on
+
+          #   {% else %}
+          #     All devices are off
+          #   {% endif %}
+
+          # fuel: >
+          #   {% set entity = 'sensor.lowest_petrol_nearby' %}
+          #   {% if not is_state(entity, 'unknown') %}
+          #     {% set long = state_attr('sensor.lowest_petrol_nearby', 'longitude') %}
+          #     {% set lat = state_attr('sensor.lowest_petrol_nearby', 'latitude') %}
+          #     {% set location = state_attr('sensor.lowest_petrol_nearby', 'location') %}
+          #     {% set waze_link = 'https://www.waze.com/ul?ll=' ~ lat ~ '%2C' ~ long ~ '&navigate=yes' %}
+          #     <span class="icon">{{'\u26FD'}}</span><span>The cheapest petrol in the area is <b>£{{ states(entity) }}</b> per litre, at  <a href="{{ waze_link }}" target="_blank"><b>{{ location }}</b></a></span>
+          #   {% else %}
+          #     Unable to fetch fuel price...
+          #   {% endif %}

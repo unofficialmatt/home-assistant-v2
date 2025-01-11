@@ -1,0 +1,278 @@
+mushroom_chips:
+  card:
+    type: custom:mushroom-chips-card
+    alignment: end
+    chips:
+      - type: action
+        tap_action:
+          action: navigate
+          navigation_path: /lovelace
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        icon: mdi:arrow-left
+        card_mod:
+          style: |
+            @media (min-width: 500px) {
+              ha-card {
+                display:none !important;
+              }
+            }
+
+      - type: menu
+        card_mod:
+          style: |
+            @media (min-width: 500px) {
+              ha-card {
+                display:none !important;
+              }
+            }
+
+      - type: spacer
+      - type: conditional
+        conditions:
+          - condition: or
+            conditions:
+              - condition: state
+                entity: sensor.next_bin_collection
+                state: "1"
+              - condition: state
+                entity: sensor.next_bin_collection
+                state: "0"
+        chip:
+          type: template
+          entity: sensor.next_bin_collection
+          icon_color: >
+            {% if state_attr('sensor.next_bin_collection','type') == 'Recycling' %}
+              blue
+            {% else %}
+              green
+            {% endif %}
+          icon: mdi:trash-can
+          content: >
+            {% set state = states("sensor.next_bin_collection") %}
+            {% if state == "1" %}
+              Tomorrow
+            {% elif state == "0" %}
+              Today
+            {% endif %}
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          double_tap_action:
+            action: none
+
+      - type: template
+        entity: "sensor.pirateweather_summary"
+        icon_color: white
+        icon: >-
+          {% if(states('sensor.pirateweather_precip_probability') | float >= 50) %}
+            mdi:weather-rainy
+          {% elif(states('weather.pirateweather') == 'clear-night') %}
+            mdi:weather-night
+          {% elif(states('weather.pirateweather') == 'clear') %}
+            mdi:weather-sunny
+          {% elif(states('weather.pirateweather') == 'cloudy') %}
+            mdi:weather-cloudy
+          {% elif(states('weather.pirateweather') == 'fog') %}
+            mdi:weather-fog
+          {% elif(states('weather.pirateweather') == 'hail') %}
+            mdi:weather-hail
+          {% elif(states('weather.pirateweather') == 'lightning') %}
+            mdi:weather-lightning
+          {% elif(states('weather.pirateweather') == 'lightning-rainy') %}
+            mdi:weather-lightning-rainy
+          {% elif(states('weather.pirateweather') == 'partlycloudy') %}
+            mdi:weather-partly-cloudy
+          {% elif(states('weather.pirateweather') == 'pouring') %}
+            mdi:weather-pouring
+          {% elif(states('weather.pirateweather') == 'rainy') %}
+            mdi:weather-rainy
+          {% elif(states('weather.pirateweather') == 'snowy') %}
+            mdi:weather-snowy
+          {% elif(states('weather.pirateweather') == 'snowy-rainy') %}
+            mdi:weather-snowy-rainy
+          {% elif(states('weather.pirateweather') == 'sunny') %}
+            mdi:weather-sunny
+          {% elif(states('weather.pirateweather') == 'windy') %}
+            mdi:weather-windy
+          {% elif(states('weather.pirateweather') == 'windy-variant') %}
+            mdi:weather-windy-variant
+          {% else %}
+            mdi:weather-sunny
+          {% endif %}
+        tap_action:
+          action: fire-dom-event
+          browser_mod:
+            service: browser_mod.popup
+            data:
+              title: "Weather Forecast"
+              content:
+                type: custom:decluttering-card
+                template: mushroom_weather_stack
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+
+      - type: alarm-control-panel
+        entity: alarm_control_panel.aarlo_front_door
+        content_info: none
+
+      - type: template
+        icon: mdi:wifi
+        tap_action:
+          action: perform-action
+          perform_action: browser_mod.popup
+          data:
+            title: Join WiFi
+            content:
+              type: picture
+              image: /local/qifi.png
+
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: media_player.spotify
+            state: playing
+        chip:
+          type: entity
+          entity: media_player.spotify
+          tap_action:
+            action: fire-dom-event
+            browser_mod:
+              service: browser_mod.popup
+              data:
+                title: Spotify
+                content:
+                  type: custom:decluttering-card
+                  template: mushroom_spotify_stack
+          hold_action:
+            action: none
+          double_tap_action:
+            action: none
+          content_info: none
+          icon_color: green
+          use_entity_picture: false
+
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: "[[door_sensor]]"
+            state_not: "unknown"
+          - condition: state
+            entity: "[[door_sensor]]"
+            state_not: "unavailable"
+        chip:
+          type: template
+          entity: "[[door_sensor]]"
+          icon_color: >
+            {% set state = states("[[door_sensor]]") %}
+            {% if (state == 'off') %}
+              purple
+            {% else %}
+              primary
+            {% endif %}
+          icon: |+
+            {% set state = states("[[door_sensor]]") %}
+            {% if (state == 'off') %}
+              mdi:door-closed
+            {% else %}
+              mdi:door-open
+            {% endif %}
+          tap_action:
+            action: more-info
+          hold_action:
+            action: none
+          double_tap_action:
+            action: none
+
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: "[[occupancy_sensor]]"
+            state_not: "unknown"
+          - condition: state
+            entity: "[[occupancy_sensor]]"
+            state_not: "unavailable"
+        chip:
+          type: template
+          entity: "[[occupancy_sensor]]"
+          icon_color: >
+            {% set state = states("[[occupancy_sensor]]") %}
+            {% if (state == 'off') %}
+              purple
+            {% else %}
+              primary
+            {% endif %}
+          icon: |+
+            {% set state = states("[[occupancy_sensor]]") %}
+            {% if (state == 'off') %}
+              mdi:account-off-outline
+            {% else %}
+              mdi:account
+            {% endif %}
+          tap_action:
+            action: more-info
+          hold_action:
+            action: none
+          double_tap_action:
+            action: none
+
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: "[[occupancy_sensor_2]]"
+            state_not: "unknown"
+          - condition: state
+            entity: "[[occupancy_sensor_2]]"
+            state_not: "unavailable"
+        chip:
+          type: template
+          entity: "[[occupancy_sensor_2]]"
+          icon_color: >
+            {% set state = states("[[occupancy_sensor_2]]") %}
+            {% if (state == 'off') %}
+              purple
+            {% else %}
+              primary
+            {% endif %}
+          icon: |+
+            {% set state = states("[[occupancy_sensor_2]]") %}
+            {% if (state == 'off') %}
+              mdi:account-off-outline
+            {% else %}
+              mdi:account
+            {% endif %}
+          tap_action:
+            action: more-info
+          hold_action:
+            action: none
+          double_tap_action:
+            action: none
+# TODO: ADD THESE IN...
+#- !include ../chips/door.yaml
+
+# chip_vacuum_room:
+#   template: "chips"
+#   triggers_update: "all"
+#   show_icon: true
+#   icon: "mdi:robot-vacuum"
+#   styles:
+#     grid:
+#       - grid-template-areas: "'i'"
+#   variables:
+#     ulm_card_segments:
+#     ulm_card_iterations: "1"
+#   tap_action:
+#     action: call-service
+#     action: script.vacuum_clean_segments_message
+#     service_data:
+#       segments: "[[[ return variables.ulm_card_segments ]]]"
+#       iterations: "[[[ return variables.ulm_card_iterations ]]]"
+# - type: custom:button-card
+#   template: chip_vacuum_room
+#   variables:
+#     ulm_card_segments: '["18","20"]'

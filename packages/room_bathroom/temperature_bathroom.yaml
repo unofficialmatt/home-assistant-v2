@@ -1,0 +1,54 @@
+sensor:
+  - platform: template
+    sensors:
+      bathroom_temperature:
+        friendly_name: "Bathroom Temperature"
+        value_template: "{{ state_attr('climate.bathroom', 'current_temperature') }}"
+        unit_of_measurement: "°C"
+      bathroom_target_temperature:
+        friendly_name: "Bathroom Target Temperature"
+        value_template: "{{ state_attr('climate.bathroom', 'temperature') }}"
+        unit_of_measurement: "°C"
+
+automation:
+  - alias: Bathroom - adjust radiator temperature
+    id: "bathroom_radiator_adjust"
+    description: "Adjust Bathroom Radiator temperature when home becomes occupied or the target temperature changes"
+    trigger:
+      # 1. Trigger when the home status changes to 'Home'
+      - platform: state
+        entity_id: input_select.home_status
+        to: "Home"
+      # 2. Trigger when the room target temperature changes
+      - platform: state
+        entity_id: sensor.bathroom_target_temperature
+    condition:
+      condition: and
+      conditions:
+        # 1. The house is occupied
+        - condition: state
+          entity_id: input_select.home_status
+          state: "Home"
+        # 2. The target temperature of the radiator does not already match the target temperature we want (prevents this automation running every 5 mins)
+        - condition: template
+          value_template: "{{ state_attr('climate.bathroom', 'temperature') | float != states('sensor.bathroom_target_temperature') | float }}"
+    action:
+      - action: climate.set_temperature
+        data_template:
+          temperature: "{{ states('sensor.bathroom_target_temperature') | int }}"
+        target:
+          entity_id: climate.bathroom
+
+  - alias: Bathroom - radiator idle
+    id: "bathroom_radiator_idle"
+    description: "Sets the downstairs toilet radiator to idle when the house is unoccupied"
+    trigger:
+      - platform: state
+        entity_id: input_select.home_status
+        to: "Away"
+    action:
+      - action: climate.set_temperature
+        data_template:
+          temperature: "{{ states('sensor.unoccupied_target_temperature') | int }}"
+        target:
+          entity_id: climate.master_bedroom

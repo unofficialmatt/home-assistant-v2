@@ -1,0 +1,99 @@
+# lovelace_gen
+{% set recipes = [ 'minus_3_days', 'minus_2_days', 'minus_1_days', 'today', '1_day' , '2_days', '3_days', '4_days', '5_days', '6_days' ] %}
+
+- title: Recipes
+  path: recipes
+  icon: mdi:food
+  type: custom:vertical-layout
+  layout:
+    width: 300
+    max_width: 1200
+    margin: 20px 40px
+  visible: false
+  cards:
+    - type: custom:mushroom-chips-card
+      chips:
+        # - type: spacer
+        - type: action
+          tap_action:
+            action: navigate
+            navigation_path: /lovelace-kiosk/home/
+          hold_action:
+            action: none
+          double_tap_action:
+            action: none
+          icon: mdi:arrow-left
+          card_mod:
+            style:
+              .: |
+                ha-card {
+                  margin-bottom: 12px;
+                }
+    - type: custom:state-switch
+      entity: hash
+      default: today
+      states:
+        {% for recipe in recipes %}
+        {{ recipe }}:
+          type: vertical-stack
+          cards:
+            - type: custom:decluttering-card
+              template: mushroom_recipe_title
+              variables:
+                - recipe: {{ recipe }}
+                - source_url: "{{ state_attr('sensor.paprika_' ~ recipe, 'source_url') }}"
+            - type: custom:button-card
+              entity: sensor.paprika_{{ recipe }}
+              template: recipe_ingredients
+            - type: custom:button-card
+              entity: sensor.paprika_{{ recipe }}
+              template: recipe_method
+            - type: custom:decluttering-card
+              template: mushroom_recipe_remove
+              variables:
+                - recipe: {{ recipe }}
+                - recipe_uid: "{{ state_attr('sensor.paprika_' ~ recipe, 'uid') }}"
+        {% endfor %}
+
+    - type: custom:mod-card
+      view_layout:
+        grid-area: selector
+      card:
+        type: grid
+        columns: 1
+        square: false
+        cards:
+          {% for recipe in recipes %}
+          - type: conditional
+            conditions:
+              - entity: sensor.paprika_{{ recipe }}
+                state_not: "unknown"
+            card:
+              type: custom:decluttering-card
+              template: mushroom_recipe_selector
+              variables:
+                - recipe: {{ recipe }}
+          {% endfor %}
+      card_mod:
+        style:
+          hui-grid-card$ : |
+            @media(min-width: 400px) {
+              #root {
+                --grid-card-column-count: 2 !important;
+              }
+            }
+            @media(min-width: 600px) {
+              #root {
+                --grid-card-column-count: 3 !important;
+              }
+            }
+            @media(min-width: 900px) {
+              #root {
+                --grid-card-column-count: 4 !important;
+              }
+            }
+            @media(min-width: 1200px) {
+              #root {
+                --grid-card-column-count: 5 !important;
+              }
+            }

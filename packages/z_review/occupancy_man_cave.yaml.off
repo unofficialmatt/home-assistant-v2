@@ -1,0 +1,28 @@
+automation:
+  - alias: Man Cave - Turn on Scent
+    id: "1700208840"
+    description: "Turns on Man Cave Scent if occupancy is detected, once per day"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.man_cave_occupancy
+        to: "on"
+    condition:
+      # The automation has not run yet today
+      - "{{ state_attr(this.entity_id, 'last_triggered').date() < now().date() }}"
+    action:
+      - action: switch.turn_on
+        entity_id: switch.man_cave_scent
+
+  - alias: Man Cave - Turn off Scent
+    id: "1700208841"
+    description: "Turns off Man Cave scent after it has been active for 4 hours"
+    trigger:
+      - platform: state
+        entity_id: switch.man_cave_scent
+        to: "on"
+        for:
+          hours: 4
+    action:
+      - action: switch.turn_off
+        entity_id: switch.man_cave_scent
+# TODO: Something cool with the CD lights - eg. change colour to match whoever is on Teams

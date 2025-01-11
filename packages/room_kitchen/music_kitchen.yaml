@@ -1,0 +1,73 @@
+automation:
+  - alias: Kitchen - Auto Music
+    id: "kitchen_auto_music"
+    description: Start playing music in the kitchen when it's occupied for more than 8 minutes
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kitchen_occupancy
+        to: "on"
+        for: "00:08:00"
+    condition:
+      condition: not
+      conditions:
+        # Not if the kitchen speaker is already playing
+        - condition: state
+          entity_id: media_player.kitchen_speaker
+          state: "playing"
+        # Not if Spotify is already playing
+        - condition: state
+          entity_id: media_player.spotify
+          state: "playing"
+        # Not before 09:00
+        - condition: time
+          before: "09:00:00"
+        # Not after 22:00
+        - condition: time
+          after: "22:00:00"
+    action:
+      - action: media_player.volume_set
+        data:
+          entity_id: media_player.kitchen_speaker
+          volume_level: 0.3
+      - action: script.spotify_play_random_playlist
+        data:
+          device_name: Kitchen
+          playlist: >
+            {{ [ 'Jazz', 'Classical' ] | random }}
+      # - action: spotcast.start
+      #   data:
+      #     device_name: Kitchen
+      #     uri: >
+      #       {{ [
+      #       'spotify:playlist:37i9dQZEVXcHsW4pFj4T0C',
+      #       'spotify:playlist:37i9dQZEVXbtkYqvjNCAlq',
+      #       'spotify:playlist:37i9dQZF1DX4W3aJJYCDfV',
+      #       'spotify:playlist:37i9dQZF1E39Ps1K88u1ff',
+      #       'spotify:playlist:37i9dQZF1E35YKW6GUFybi',
+      #       'spotify:playlist:37i9dQZF1E361Hv88hegzr',
+      #       'spotify:playlist:37i9dQZF1E35HFSOhxdVZl',
+      #       'spotify:playlist:37i9dQZF1E34SkVHjRrcrO',
+      #       'spotify:playlist:37i9dQZF1E37vMthaZwm3G'
+      #       ] | random }}
+      #     # Discover Weekly, Release Radar, New Music Friday UK, Daily Mixes 1-6
+      #     force_playback: true
+      #     random_song: true
+      #     shuffle: true
+      #     repeat: true
+
+  - alias: Kitchen - Stop Music
+    id: "kitchen_stop_music"
+    description: Stop playing music in the kitchen when it's unoccupied for more than 10 minutes
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kitchen_occupancy
+        to: "off"
+        for: "00:10:00"
+    condition:
+      condition: state
+      entity_id: media_player.kitchen_speaker
+      state: "playing"
+    action:
+      - action: media_player.media_stop
+        data:
+          entity_id: media_player.kitchen_speaker

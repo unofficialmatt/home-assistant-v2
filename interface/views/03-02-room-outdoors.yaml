@@ -1,62 +1,171 @@
 # lovelace_gen
+{% set lights = {'Porch': 'porch' } %}
+{% set batteries = {'Porch Motion': 'porch_motion_battery' } %}
 
 - title: Outdoors
   path: outdoors
+  type: custom:grid-layout
   icon: mdi:tree
+  layout:
+    grid-template-columns: 1fr 1fr 1fr
+    grid-template-rows: auto
+    grid-gap: 12px
+    margin: 20px
+    grid-template-areas: |
+      "header header chips"
+      "col1 col2 col3"
+    mediaquery:
+      "(max-width: 500px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "chips chips"
+          "header header"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 900px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 1200px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col2"
+          "col3 col2"
+          "col3 ."
 
   cards:
-    - type: horizontal-stack
-      cards:
-        - !include ../chips/chip_back.yaml
-        #- !include ../chips/presence.yaml
-        #- !include ../chips/wifi.yaml
-        # - !include ../chips/spotify.yaml
-        # - !include ../chips/temperature.yaml
-        # - !include ../chips/chance_of_rain.yaml
 
-    - type: vertical-stack
-      cards:
-        # TODO: Maybe move to this: https://github.com/twrecked/lovelace-hass-aarlo
-        - type: "custom:button-card"
-          entity: camera.aarlo_front_door
-          template: custom_card_camera
-          show_icon: false
-          variables:
-            ulm_custom_card_camera_title: true
-            ulm_custom_card_camera_name: Front Door
-            ulm_custom_card_camera_label: '[[[ return "Last Recording: " + states["sensor.aarlo_last_front_door"].state ]]]'
+    # GRID AREA HEADER
+    - type: custom:decluttering-card
+      template: mushroom_view_header
+      view_layout:
+        grid-area: header
+      variables:
+        - room: Outdoors
 
-    - type: vertical-stack
-      cards:
-        - type: custom:button-card
-          template: card_title
-          label: "Media Players"
+    # GRID AREA CHIPS
+    - type: custom:decluttering-card
+      template: mushroom_chips
+      view_layout:
+        grid-area: chips
+      variables:
+        - occupancy_sensor: binary_sensor.porch_motion
 
-        - type: custom:button-card
-          template: card_media_player
-          entity: media_player.summer_house_tv
-          variables:
-            ulm_card_media_player_name: Summer House TV
-            ulm_card_media_player_enable_art: true
-            ulm_card_media_player_enable_controls: true
-            ulm_card_media_player_enable_volume_slider: true
-            ulm_card_media_player_enable_popup: true
-            ulm_card_media_player_collapsible: true
-            ulm_card_media_player_more_info: true
+    # GRID AREA COL1
     - type: vertical-stack
+      view_layout:
+        grid-area: col1
       cards:
-        - type: custom:button-card
-          template: card_title
-          label: Batteries
+
+        - type: heading
+          heading: Front of House
+          icon: mdi:castle
+          badges:
+            - type: entity
+              entity: light.porch
+              tap_action:
+                action: toggle
+              show_state: true
+              color: state
 
         - type: grid
           columns: 2
           square: false
           cards:
-            - type: custom:button-card
-              template: card_battery
-              entity: sensor.aarlo_battery_level_front_door
+            {% for key, val in lights.items() %}
+            - type: custom:mushroom-light-card
+              entity: light.{{ val }}
+              name: "{{ key }}"
+              use_light_color: true
+              show_brightness_control: true
+              # show_color_temp_control: true
+              # show_color_control: true
+              collapsible_controls: true
+            {% endfor %}
+
+        - type: heading
+          heading: Batteries
+          heading_style: subtitle
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            {% for key, val in batteries.items() %}
+            - type: custom:decluttering-card
+              template: mushroom_battery
               variables:
-                ulm_card_battery_name: Doorbell
-                ulm_card_battery_battery_level_danger: 10
-                ulm_card_battery_battery_level_warning: 30
+                - entity_id: sensor.{{ val }}
+                - title: "{{ key }}"
+            {% endfor %}
+
+      # TODO: Maybe move to this: https://github.com/twrecked/lovelace-hass-aarlo
+        # - type: "custom:button-card"
+        #   entity: camera.aarlo_front_door
+        #   template: custom_card_camera
+        #   show_icon: false
+        #   variables:
+        #     ulm_custom_card_camera_title: true
+        #     ulm_custom_card_camera_name: Front Door
+        #     ulm_custom_card_camera_label: '[[[ return "Last Recording: " + states["sensor.aarlo_last_front_door"].state ]]]'
+
+
+    # GRID AREA COL2
+    # - type: vertical-stack
+    #   view_layout:
+    #     grid-area: col2
+    #   cards:
+
+    #     - type: heading
+    #       heading: Back Garden
+    #       icon: mdi:tree
+    #       badges:
+    #         # TODO: Motion Badge?
+    #         - type: entity
+    #           entity: light.landing
+    #           tap_action:
+    #             action: toggle
+    #           show_state: true
+    #           color: st
+
+    # GRID AREA COL3
+    # - type: vertical-stack
+    #   view_layout:
+    #     grid-area: col3
+    #   cards:
+
+    #     - type: heading
+    #       heading: Summer House
+    #       icon: mdi:cabin
+          # badges:
+          #   - type: entity
+          #     entity: light.landing
+          #     tap_action:
+          #       action: toggle
+          #     show_state: true
+          #     color: state
+
+
+    # - type: vertical-stack
+    #   cards:
+    #     - type: custom:button-card
+    #       template: card_title
+    #       label: "Media Players"
+
+    #     - type: custom:button-card
+    #       template: card_media_player
+    #       entity: media_player.summer_house_tv
+    #       variables:
+    #         ulm_card_media_player_name: Summer House TV
+    #         ulm_card_media_player_enable_art: true
+    #         ulm_card_media_player_enable_controls: true
+    #         ulm_card_media_player_enable_volume_slider: true
+    #         ulm_card_media_player_enable_popup: true
+    #         ulm_card_media_player_collapsible: true
+    #         ulm_card_media_player_more_info: true

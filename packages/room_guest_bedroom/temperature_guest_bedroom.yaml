@@ -1,0 +1,70 @@
+sensor:
+  - platform: template
+    sensors:
+      guest_bedroom_temperature:
+        friendly_name: "Guest Bedroom Temperature"
+        value_template: "{{ state_attr('climate.guest_bedroom', 'current_temperature') }}"
+        unit_of_measurement: "°C"
+      guest_bedroom_target_temperature:
+        friendly_name: "Guest Bedroom Target Temperature"
+        value_template: "{{ state_attr('climate.guest_bedroom', 'temperature') }}"
+        unit_of_measurement: "°C"
+
+automation:
+  - alias: Guest Bedroom - turn on radiator
+    id: "guest_bedroom_radiator_on"
+    description: "Turns on Guest Bedroom Radiator when occupancy is detected, with a temperature dependent on the time of day"
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: state
+        entity_id: binary_sensor.guest_bedroom_occupancy
+        to: "on"
+    condition:
+      condition: and
+      conditions:
+        # 1. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.guest_bedroom_occupancy
+          state: "on"
+        # 2. The house is occupied - don't turn on if it's just the cat
+        - condition: state
+          entity_id: input_select.home_status
+          state: "Home"
+        # 3. The temperature in the room is lower than the target temperature by 0.5 degrees or higher than the target temperature by 0.5 degrees.
+        # Otherwise the radiator will stay on a higher temperature than the target temperature, and the room will get too hot
+        - condition: or
+          conditions:
+            - condition: template
+              value_template: "{{ states('sensor.guest_bedroom_temperature') | float < states('sensor.bedroom_target_temperature') | float - 0.5 }}"
+            - condition: template
+              value_template: "{{ states('sensor.guest_bedroom_temperature') | float > states('sensor.bedroom_target_temperature') | float + 0.5 }}"
+        # 4. The target temperature of the radiator does not already match the target temperature we want (prevents this automation running every 5 mins)
+        - condition: template
+          value_template: "{{ state_attr('climate.guest_bedroom', 'temperature') | float != states('sensor.bedroom_target_temperature') | float }}"
+    action:
+      - action: climate.set_temperature
+        data_template:
+          temperature: "{{ states('sensor.bedroom_target_temperature') | int }}"
+        target:
+          entity_id: climate.guest_bedroom
+
+  - alias: Guest Bedroom - turn off radiator
+    id: "guest_bedroom_radiator_off"
+    description: "Turns off Guest Bedroom Radiator when occupancy is not detected for 10 minutes"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.guest_bedroom_occupancy
+        to: "off"
+        for:
+          minutes: 10
+    condition:
+      # The target temperature does not already match the unoccupied target temperature we want
+      - condition: template
+        value_template: "{{ state_attr('climate.guest_bedroom', 'temperature') | float != states('sensor.unoccupied_target_temperature') | float }}"
+    action:
+      - action: climate.set_temperature
+        data_template:
+          temperature: "{{ states('sensor.unoccupied_target_temperature') | int }}"
+        target:
+          entity_id: climate.guest_bedroom

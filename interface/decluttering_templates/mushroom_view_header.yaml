@@ -1,0 +1,36 @@
+mushroom_view_header:
+  card:
+    type: custom:mushroom-chips-card
+    chips:
+      # - type: spacer
+      - type: action
+        tap_action:
+          action: navigate
+          navigation_path: /lovelace
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        icon: mdi:arrow-left
+        card_mod:
+          style: |
+            @media (max-width: 499px) {
+              ha-card {
+                display:none !important;
+              }
+            }
+      - type: template
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        content: "[[room]]"
+        card_mod:
+          style: |
+            ha-card {
+               --chip-font-size: 1.6rem;
+               --chip-font-weight: 500;
+               --chip-background: transparent;
+            }

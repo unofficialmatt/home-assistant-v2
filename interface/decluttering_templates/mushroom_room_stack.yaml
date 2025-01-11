@@ -1,0 +1,81 @@
+mushroom_room_stack:
+  card:
+    type: custom:vertical-stack-in-card
+    card_mod:
+      style: |
+        ha-card {
+          box-shadow: none;
+          margin:0;
+          padding-left: 0px;
+          padding-right: 0px;
+        }
+    cards:
+      - type: custom:mushroom-light-card
+        entity: light.[[room_slug]]
+        use_light_color: true
+        show_color_temp_control: true
+        show_color_control: true
+        show_brightness_control: true
+
+      - type: conditional
+        conditions:
+          - entity: input_select.[[room_slug]]_light_mode
+            state_not: "unavailable"
+          - entity: input_select.[[room_slug]]_light_mode
+            state_not: "unknown"
+        card:
+          type: custom:mushroom-select-card
+          entity: input_select.[[room_slug]]_light_mode
+          icon: ""
+          icon_color: disabled
+          secondary_info: none
+          fill_container: false
+          icon_type: none
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          double_tap_action:
+            action: none
+          name: "Select Scene:"
+          layout: horizontal
+          card_mod:
+            style: |
+              ha-card {
+                margin: 20px 0;
+              }
+
+      - type: conditional
+        conditions:
+          - entity: climate.[[room_slug]]
+            state_not: "unavailable"
+          - entity: climate.[[room_slug]]
+            state_not: "unknown"
+        card:
+          type: custom:mushroom-climate-card
+          entity: "climate.[[room_slug]]"
+          icon: mdi:thermometer
+          show_temperature_control: true
+          collapsible_controls: true
+          tap_action:
+            action: more-info
+
+      - type: conditional
+        conditions:
+          - entity: input_boolean.guests_staying_[[room_slug]]
+            state_not: "unavailable"
+          - entity: input_boolean.guests_staying_[[room_slug]]
+            state_not: "unknown"
+        card:
+          type: custom:decluttering-card
+          template: mushroom_boolean
+          variables:
+            - entity_id: input_boolean.guests_staying_[[room_slug]]
+            - title: Guests Staying?
+            - icon: mdi:account
+          card_mod:
+            style: |
+              ha-card {
+                box-shadow: none;
+                background: transparent;
+              }

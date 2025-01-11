@@ -1,0 +1,78 @@
+- /custom_components
+
+- [x] Adaptive Lighting
+  - TODO: Reinstate sleep mode or a version of it? OR disable it on all
+- [x] Amazon Polly
+- [x] Apple TV
+  - TODO: how can this be used
+- [] Arlo Camera
+  - Temporarily off, come back to this
+- [x] Bitcoin
+  - Only used in the UI - no automation
+- [] Bambu Labs
+- [] Browser Mod
+  - Deleted, come back if useful
+- [x] ESP Home
+  - TODO: Test adjusting maitain and trigger sensitivty to avoid rupert causing false posities
+- [] Fuel Prices
+  - Temporarily off, come back to this
+- [] FUlly Kiosk
+- https://xtremeownage.com/2022/07/08/fire-tablet-as-home-assistant-kiosk/
+- MQTT not working, think i forgot the password?
+- [x] Google Cast
+  - summer house tv?
+  - where to put all other speakers from last house
+- [] Google Wifi
+  - Temporarily off, come back to this
+- [x] HACS
+  - Some kind of automation when updates?
+- [] Haier hOn
+  - Temporarily off, come back to this
+- [x] Hildebrand Glow (DCC)
+  - Do some automations or something?
+- [] Hive
+- [x] Local Tuya
+- [x] Lovelace Gen
+- [] Magic Areas
+  - Temporarily off, come back to this
+- [x] Meross LAN
+- [] Mobile App
+- [x] Moon
+      -- TODO: Add it to the tts messge, what else can be done nice with this
+- [] MQTT
+  - TODO: Govee2MQTT Not working, Man Cave CDs and cupboard
+  - [] TODO: Fix Roborock in here
+- [x] OpenAI
+- [x] Philips Hue
+- [x] Philips TV
+- [x] Pirate Weather
+- [] Plex Media Server
+  - Temporarily off, come back to this
+- [] Plex Recently Added
+  - Temporarily off, come back to this
+- [x] Proximity
+- [x] RESTful
+- [x] RESTful Command
+- [] Shell Command
+  - Need to test that Arlo download working - set up alert to discord if it fails
+- [] Spotcast
+- [x] Spotify
+- Spook
+- [x] Sun
+- sunrise / set is in there, not sure if useful. disabled for now.
+- [x] Tasmota
+  - lots of sensors disabled, might be useful
+  - Washing machine plug / mini fridge gone missing
+- [x] TP Link
+- [x] UI Lovelace Mimimalist
+- [x] Waze Travel Time
+  - Get this into the UI in a meaninfgul way
+  - Use to colour code bed light like before
+- [x] Workday
+- [x] Zigbee
+
+- garmin / fitbit?
+
+- DELETE OLD ENTITIES VIA UI
+
+https://blakadder.github.io/esphome-configs/ - check this is done on ESP. document it.

@@ -1,0 +1,101 @@
+automation:
+  - alias: Master Bedroom - Sleep Mode - Wind Down
+    id: "master_bedroom_sleep_mode_wind_down"
+    description: "Initialise Wind Down mode when motion is detected in the bedroom between 20:30 and 03:00"
+    trigger:
+      # When either mmWave or PIR sensor are triggered (can't use binary_sensor.master_bedroom_occupancy as it might already be on)
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_mmwave_sensor
+        to: "on"
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_pir_sensor
+        to: "on"
+    condition:
+      condition: and
+      conditions:
+        # 1. Sleep mode is currently set to Off
+        - condition: template
+          value_template: "{{ float(states('input_number.master_bedroom_bedtime_status')) == 0.0 }}"
+        # 2. It is between 20:30 and 03:00
+        - condition: time
+          after: "20:30:00"
+          before: "03:00:00"
+    action:
+      - action: input_number.increment
+        target:
+          entity_id: input_number.master_bedroom_bedtime_status
+      # Turn on the lights if they are off. Otherwise master_bedroom_sleep_mode_asleep will never run
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: light.master_bedroom
+                state: "off"
+            sequence:
+              # TODO: Set a scene here instead.
+              - action: light.turn_on
+                data:
+                  entity_id: light.master_bedroom
+      - action: script.notify_engine
+        data:
+          TITLE: "Master Bedroom Wind Down"
+          MESSAGE: >
+            "Wind Down mode activated"
+          DEBUG: true
+          LOCATION: "any"
+
+  - alias: Master Bedroom - Sleep Mode - Asleep
+    id: "master_bedroom_sleep_mode_asleep"
+    description: "Initialise Asleep mode when the lights are turned off in the Master Bedroom, when 'Wind Down' mode is active"
+    trigger:
+      - platform: state
+        entity_id: light.master_bedroom
+        to: "off"
+    condition:
+      # 1. Sleep mode is currently set to Wind Down
+      - condition: template
+        value_template: "{{ float(states('input_number.master_bedroom_bedtime_status')) == 1.0 }}"
+    action:
+      - action: input_number.increment
+        data:
+          entity_id: input_number.master_bedroom_bedtime_status
+      - action: script.notify_engine
+        data:
+          TITLE: "Master Bedroom Asleep"
+          MESSAGE: >
+            "Asleep mode activated"
+          DEBUG: true
+          LOCATION: "any"
+
+  - alias: Master Bedroom - Sleep Mode - Reset
+    id: "master_bedroom_sleep_mode_reset"
+    description: "Resets sleep mode when occupancy is not detected for 15 minutes in the Master Bedroom"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_occupancy
+        to: "off"
+        for:
+          minutes: 15
+    condition:
+      condition: and
+      conditions:
+        # 1. Sleep mode is currently set to Wind Down or Asleep
+        - condition: template
+          value_template: "{{ float(states('input_number.master_bedroom_bedtime_status')) > 0.0 }}"
+        # 2. It's after 06:00am - we dont want any false positives
+        - condition: time
+          after: "06:00:00"
+        # 3. It's before 20:30 - we dont want any false positives
+        - condition: time
+          before: "20:30:00"
+    action:
+      - action: input_number.set_value
+        data:
+          entity_id: input_number.master_bedroom_bedtime_status
+          value: 0.0
+      - action: script.notify_engine
+        data:
+          TITLE: "Master Bedroom Sleep Mode Reset"
+          MESSAGE: >
+            "Wind Down mode deactivated"
+          DEBUG: true
+          LOCATION: "any"

@@ -1,0 +1,54 @@
+light:
+  - platform: group
+    name: "Upstairs Lights"
+    entities:
+      - light.landing
+      - light.master_bedroom
+      - light.guest_bedroom
+      - light.bedroom_four
+      - light.man_cave
+      - light.man_cave_cds
+      - light.bathroom
+  - platform: group
+    name: "Downstairs Lights"
+    entities:
+      - light.hallway
+      - light.kitchen_all
+      - light.downstairs_toilet
+      - light.lounge_all
+      - light.nook_all
+  - platform: group
+    name: Hallways
+    entities:
+      - light.hallway
+      - light.landing
+  - platform: group
+    name: "All Lights"
+    entities:
+      - light.upstairs_lights
+      - light.downstairs_lights
+      - light.outside
+
+  # FIXME: These re missing
+  - platform: group
+    name: "Man Cave CDS segment odd"
+    entities:
+      - light.man_cave_cds_segment_001
+      - light.man_cave_cds_segment_003
+      - light.man_cave_cds_segment_005
+      - light.man_cave_cds_segment_007
+      - light.man_cave_cds_segment_009
+      - light.man_cave_cds_segment_011
+      - light.man_cave_cds_segment_013
+      - light.man_cave_cds_segment_015
+
+  - platform: group
+    name: "Man Cave CDS segment even"
+    entities:
+      - light.man_cave_cds_segment_002
+      - light.man_cave_cds_segment_004
+      - light.man_cave_cds_segment_006
+      - light.man_cave_cds_segment_008
+      - light.man_cave_cds_segment_010
+      - light.man_cave_cds_segment_012
+      - light.man_cave_cds_segment_014

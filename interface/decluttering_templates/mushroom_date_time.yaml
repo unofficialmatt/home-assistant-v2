@@ -1,0 +1,139 @@
+mushroom_datetime:
+  card:
+    type: custom:vertical-stack-in-card
+    cards:
+      - type: custom:mushroom-template-card
+        icon: mdi:clock-time-four-outline
+        entity: input_datetime.[[entity]]
+        primary: >
+          {{ state_attr("input_datetime.[[entity]]","friendly_name") }}
+        # FIXME: This does not work
+        # secondary: >-
+        #   {{(as_timestamp(state_attr("input_datetime.[[entity]]","last_changed")  | timestamp_custom('%I:%M %p'))}}
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        icon_color: disabled
+      - type: grid
+        square: false
+        columns: 3
+        card_mod:
+          style: |
+            ha-card {
+              align-items: center;
+            }
+        cards:
+          - type: custom:mushroom-template-card
+            icon: mdi:minus
+            hold_action:
+              action: none
+            double_tap_action:
+              action: none
+            tap_action:
+              action: call-service
+              service: script.decrement_datetime
+              service_data:
+                entity_id: input_datetime.[[entity]]
+            card_mod:
+              style:
+                mushroom-state-item$: |
+                  .icon {
+                    width: 100%;
+                    height: 100%;
+                  }
+                mushroom-shape-icon$: |
+                  .shape {
+                    --icon-size: 36px;
+                    --icon-symbol-size: 28px;
+                    --icon-primary-color: var(--card-primary-color);
+                    width: 100% !important;
+                    border-radius: 6px !important;
+                  }
+                .: |
+                  ha-card {
+                    box-shadow: none;
+                    margin:0;
+                    margin-bottom: 8px;
+                  }
+
+          - type: custom:mushroom-entity-card
+            entity: input_datetime.[[entity]]
+            primary_info: state
+            secondary_info: none
+            icon_type: none
+            hold_action:
+              action: none
+            double_tap_action:
+              action: none
+            card_mod:
+              style:
+                mushroom-state-info$: |
+                  .primary {
+                    --card-primary-font-size: 1.5rem;
+                    --card-primary-line-height: 1.1 !important;
+                    font-weight: 400 !important;
+                    text-align: center;
+                  }
+                .: |
+                  ha-card {
+                    box-shadow: none;
+                    margin:0;
+                    margin-bottom: 8px;
+                  }
+
+          - type: custom:mushroom-template-card
+            icon: mdi:plus
+            hold_action:
+              action: none
+            double_tap_action:
+              action: none
+            tap_action:
+              action: call-service
+              service: script.increment_datetime
+              service_data:
+                entity_id: input_datetime.[[entity]]
+            card_mod:
+              style:
+                mushroom-state-item$: |
+                  .icon {
+                    width: 100%;
+                    height: 100%;
+                  }
+                mushroom-shape-icon$: |
+                  .shape {
+                    --icon-size: 36px;
+                    --icon-symbol-size: 28px;
+                    --icon-primary-color: var(--card-primary-color);
+                    width: 100% !important;
+                    border-radius: 6px !important;
+                  }
+                .: |
+                  ha-card {
+                    box-shadow: none;
+                    margin:0;
+                    margin-bottom: 8px;
+                  }
+            card_mod:
+              style:
+                mushroom-state-item$: |
+                  .icon {
+                    width: 100%;
+                    height: 100%;
+                  }
+                mushroom-shape-icon$: |
+                  .shape {
+                    --icon-size: 36px;
+                    --icon-symbol-size: 28px;
+                    --icon-primary-color: var(--card-primary-color);
+                    width: 100% !important;
+                    border-radius: 6px !important;
+                  }
+                .: |
+                  ha-card {
+                    box-shadow: none;
+                    margin:0;
+                    margin-bottom: 8px;
+                  }

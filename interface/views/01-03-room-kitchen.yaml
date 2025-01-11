@@ -1,132 +1,159 @@
 # lovelace_gen
-{% set lights = [ 'kitchen_1', 'kitchen_2','kitchen_3','kitchen_4','kitchen_5', 'kitchen_6','kitchen_7','kitchen_8', ] %}
-{% set batteries = [ 'kitchen_sensor_battery', 'kitchen_radiator_battery_level' ] %}
+{% set lights = { 'Ceiling One': 'kitchen_1', 'Ceiling Two': 'kitchen_2', 'Ceiling Three': 'kitchen_3', 'Ceiling Four': 'kitchen_4', 'Ceiling Five': 'kitchen_5', 'Ceiling Six': 'kitchen_6', 'Ceiling Seven': 'kitchen_7', 'Ceiling Eight': 'kitchen_8', 'Shelves': 'kitchen_shelves_light' } %}
+{% set batteries = {'Dimmer': 'kitchen_dimmer_battery','Radiator': 'kitchen_radiator_battery_level', 'Sink Water':'kitchen_sink_water_detector_battery_level', 'Wash Mach Water':'washing_machine_water_detector_battery_level' } %}
 
 - title: Kitchen
   path: kitchen
+  type: custom:grid-layout
   icon: mdi:fridge
-
+  layout:
+    grid-template-columns: 1fr 1fr 1fr
+    grid-template-rows: auto
+    grid-gap: 12px
+    margin: 20px
+    grid-template-areas: |
+      "header chips chips"
+      "col1 col2 col3"
+    mediaquery:
+      "(max-width: 500px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "chips chips"
+          "header header"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 900px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 1200px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col2"
+          "col1 col3"
+          "col1 col3"
   cards:
 
-    - type: horizontal-stack
-      cards:
-        - !include ../chips/chip_back.yaml
-        - type: 'custom:button-card'
-          template: chip_occupancy
-          entity: binary_sensor.kitchen_occupancy
-        - type: custom:button-card
-          template: chip_vacuum_room
-          variables:
-            ulm_card_segments: '["16"]'
-            ulm_card_iterations: '2'
-        #- !include ../chips/presence.yaml
-        #- !include ../chips/wifi.yaml
-        # - !include ../chips/spotify.yaml
-        # - !include ../chips/temperature.yaml
-        # - !include ../chips/chance_of_rain.yaml
+    # GRID AREA HEADER
+    - type: custom:decluttering-card
+      template: mushroom_view_header
+      view_layout:
+        grid-area: header
+      variables:
+        - room: Kitchen
 
+    # GRID AREA CHIPS
+    - type: custom:decluttering-card
+      template: mushroom_chips
+      view_layout:
+        grid-area: chips
+      variables:
+        - occupancy_sensor: binary_sensor.kitchen_occupancy
+
+    # GRID AREA COL1
     - type: vertical-stack
+      view_layout:
+        grid-area: col1
       cards:
 
-        - type: custom:button-card
-          template: card_title
-          name: "Kitchen"
-          label: "Lights"
+        - type: heading
+          heading: Lights
+          icon: mdi:lightbulb-on-outline
+          badges:
+            - type: entity
+              entity: light.kitchen_all
+              tap_action:
+                action: toggle
+              show_state: true
+              color: state
 
         - type: grid
           columns: 2
           square: false
           cards:
-
-          {% for x in lights %}
-          - type: custom:button-card
-            template: card_light
-            entity: light.{{ x }}
-            variables:
-              ulm_card_light_enable_slider: true
-              ulm_card_light_enable_color: true
-              #ulm_card_light_force_background_color: true
-              ulm_card_light_enable_collapse: true
-              ulm_card_light_enable_popup: true
-          {% endfor %}
+            {% for key, val in lights.items() %}
+            - type: custom:mushroom-light-card
+              entity: light.{{ val }}
+              name: "{{ key }}"
+              use_light_color: true
+              show_brightness_control: true
+              #show_color_temp_control: true
+              collapsible_controls: true
+            {% endfor %}
 
 
+    # GRID AREA COL2
     - type: vertical-stack
+      view_layout:
+        grid-area: col2
       cards:
 
-        - type: custom:button-card
-          template: card_title
-          label: Heating
+        - type: heading
+          heading: Heating
+          icon: mdi:radiator
+          badges:
+            - type: entity
+              entity: sensor.kitchen_temperature
+              show_state: true
+              show_icon: false
 
-        - type: "custom:button-card"
-          template: card_climate
+        - type: custom:mushroom-climate-card
           entity: climate.kitchen
-          variables:
-            ulm_card_thermostat_name: "Radiator"
+          name: Radiator
+          icon: mdi:thermometer
+          show_temperature_control: true
+          collapsible_controls: true
+          tap_action:
+            action: more-info
 
+        - type: heading
+          heading: Media
+          icon: mdi:cast
+
+        - type: custom:decluttering-card
+          template: mushroom_speaker
+          variables:
+            - entity: media_player.kitchen_speaker
+            - device_name: Kitchen
+
+    # GRID AREA COL3
     - type: vertical-stack
+      view_layout:
+        grid-area: col3
       cards:
 
-        - type: custom:button-card
-          template: card_title
-          label: "Media Players"
+        - type: heading
+          heading: Sensors
+          icon: mdi:graph
 
-        - type: custom:button-card
-          template: card_media_player
-          entity: media_player.kitchen_speaker
+        - type: heading
+          heading: Environment
+          heading_style: subtitle
+
+        - type: custom:decluttering-card
+          template: mushroom_graph
           variables:
-            ulm_card_media_player_name: Google Speaker
-            ulm_card_media_player_enable_art: true
-            ulm_card_media_player_enable_controls: true
-            ulm_card_media_player_enable_volume_slider: true
-            ulm_card_media_player_enable_popup: true
-            ulm_card_media_player_collapsible: true
-            ulm_card_media_player_more_info: true
+            - entity_one: sensor.kitchen_temperature
+            - entity_one_name: Temperature
 
-
-        - type: custom:button-card
-          template: card_title
-          label: Environment
+        - type: heading
+          heading: Batteries
+          heading_style: subtitle
 
         - type: grid
           columns: 2
           square: false
           cards:
 
-            - type: custom:button-card
-              template: card_graph
-              entity: sensor.kitchen_sensor_temperature
+            {% for key, val in batteries.items() %}
+            - type: custom:decluttering-card
+              template: mushroom_battery
               variables:
-                ulm_card_graph_color: "var(--google-blue)"
-                ulm_card_graph_name: Temperature
-                ulm_card_graph_entity: sensor.kitchen_sensor_temperature
-
-            - type: custom:button-card
-              template: card_graph
-              entity: sensor.kitchen_sensor_illuminance
-              variables:
-                ulm_card_graph_color: "var(--google-yellow)"
-                ulm_card_graph_name: Light
-                ulm_card_graph_entity: sensor.kitchen_sensor_illuminance
-
-    - type: vertical-stack
-      cards:
-
-        - type: custom:button-card
-          template: card_title
-          label: Batteries
-
-        - type: grid
-          columns: 2
-          square: false
-          cards:
-
-# TODO: FIND A BETTER WAY TO NAME THESE WITH THE LOOP
-            {% for x in batteries %}
-            - type: custom:button-card
-              template: card_battery
-              entity: sensor.{{ x }}
-              variables:
-                ulm_card_battery_battery_level_danger: 10
-                ulm_card_battery_battery_level_warning: 30
+                - entity_id: sensor.{{ val }}
+                - title: "{{ key }}"
             {% endfor %}

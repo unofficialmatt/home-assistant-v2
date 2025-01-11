@@ -1,0 +1,15 @@
+button_card_templates: !include_dir_merge_named "interface/cards"
+decluttering_templates: !include_dir_merge_named "interface/decluttering_templates"
+
+title: Canoe House
+
+# @See https://github.com/maykar/kiosk-mode
+kiosk_mode:
+  # mobile_settings:
+  #   hide_header: true
+  # admin_settings:
+  #   hide_header: true
+  # non_admin_settings:
+  #   hide_header: true
+
+views: !include_dir_merge_list "interface/kiosk-views/"

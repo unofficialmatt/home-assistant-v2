@@ -21,6 +21,10 @@ homeassistant:
   elevation: !secret zone_home_elevation
   packages: !include_dir_named packages
 
+  # Add Aarlo Videos to the media browser
+  media_dirs:
+    arlo_videos: /aarlo
+
 # Loads default set of integrations. Do not remove.
 default_config:
 
@@ -48,8 +52,11 @@ logbook: !include inc/logbook.yaml
 
 logger:
   default: warning
-  logs:
-    homeassistant.components.mqtt: debug
+  # logs:
+  # homeassistant.components.mqtt: debug
+  # homeassistant.components.rest_command: debug
+  # pyaarlo: debug
+  # custom_components.aarlo: debug
 
 frontend:
   themes: !include_dir_merge_named themes
@@ -59,10 +66,9 @@ frontend:
 lovelace:
   mode: yaml
   resources: !include interface/resources.yaml
-
-panel_iframe:
-  esp_home:
-    title: "ESPHome"
-    icon: mdi:chip
-    url: !secret esp_home_url
-    require_admin: true
+  dashboards:
+    lovelace-kiosk:
+      mode: yaml
+      filename: ui-fullykiosk.yaml
+      title: Kiosk
+      show_in_sidebar: false

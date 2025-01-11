@@ -1,0 +1,9 @@
+binary_sensor:
+  - platform: template
+    sensors:
+      bathroom_occupancy:
+        friendly_name: "Family Bathroom Occupancy"
+        value_template: "{{ is_state('binary_sensor.bathroom_motion', 'on') }}"
+        device_class: occupancy
+        delay_off: "00:10:00"
+# TODO: Use the humidity and motion sensors in a more useful way

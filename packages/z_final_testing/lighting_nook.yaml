@@ -1,0 +1,358 @@
+# TODO: Find a good way to set the scene with the dimmer
+
+input_select:
+  nook_light_mode:
+    name: Nook Scene Selector
+    options:
+      - Adaptive
+      - Energise
+      - Relax
+      - Dimmed
+      - Nightlight
+    initial: Adaptive
+    icon: mdi:lightbulb
+
+scene:
+  - name: "Nook - Adaptive"
+    id: "nook_adaptive"
+    entities:
+      light.nook_ceiling:
+        state: "on"
+      switch.adaptive_lighting_nook:
+        state: "on"
+
+  - name: "Nook - Energise"
+    id: "nook_energise"
+    entities:
+      light.nook_ceiling:
+        state: "on"
+        brightness: 255
+      light.nook_cupboard_light:
+        state: "on"
+        brightness: 255
+      light.hue_go:
+        state: "on"
+        brightness: 255
+        rgb: [255, 253, 248] # FIXME NOT WORKING?
+      switch.adaptive_lighting_nook:
+        state: "off"
+
+  - name: "Nook - Relax"
+    id: "nook_relax"
+    entities:
+      light.nook_ceiling:
+        state: "on"
+        brightness: 143
+      light.nook_cupboard_light:
+        state: "on"
+        brightness: 143
+      light.hue_go:
+        state: "on"
+        brightness: 143
+        rgb: [255, 148, 43] # FIXME NOT WORKING?
+      switch.adaptive_lighting_nook:
+        state: "off"
+
+  - name: "Nook - Dimmed"
+    id: "nook_dimmed"
+    entities:
+      light.nook_ceiling:
+        state: "on"
+        brightness: 77
+      light.nook_cupboard_light:
+        state: "on"
+        brightness: 77
+      light.hue_go:
+        state: "on"
+        brightness: 77
+        rgb: [255, 137, 14] # FIXME NOT WORKING?
+      switch.adaptive_lighting_nook:
+        state: "off"
+
+  - name: "Nook - Nightlight"
+    id: "nook_nightlight"
+    entities:
+      light.nook_ceiling:
+        state: "on"
+        brightness: 25
+      light.nook_cupboard_light:
+        state: "on"
+        brightness: 25
+      light.hue_go:
+        state: "on"
+        brightness: 25
+        rgb: [255, 137, 14] # FIXME NOT WORKING?
+      switch.adaptive_lighting_nook:
+        state: "off"
+
+light:
+  - platform: group
+    name: "Nook All"
+    entities:
+      - light.nook
+      - light.nook_cupboard_light
+
+automation:
+  #####################
+  ## SCENE SELECTION ##
+  #####################
+  - alias: Nook - Scene Set
+    id: "nook_scene_select"
+    description: "Sets the Nook Scene when the Input Select is changed"
+    trigger:
+      - platform: state
+        entity_id: input_select.nook_light_mode
+    action:
+      - action: scene.turn_on
+        data_template:
+          entity_id: >
+            scene.nook_{{ states('input_select.nook_light_mode') | lower | replace(' ', '_') }}
+
+  - alias: Nook - Reset Scene
+    id: "nook_scene_reset"
+    description: "Sets the Nook Scene to Adaptive when all the lights are turned off, after a 15 minute delay"
+    trigger:
+      - platform: state
+        entity_id: light.nook_all
+        to: "off"
+        for:
+          minutes: 15
+    action:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.nook_adaptive
+      - action: script.notify_engine
+        data:
+          TITLE: "Nook Scene Reset"
+          MESSAGE: >
+            "The Nook Scene has been reset to Adaptive as all the lights were turned off."
+          DEBUG: true
+          LOCATION: "any"
+
+  #####################
+  ## ACCENT LIGHTING ##
+  #####################
+  - alias: Nook - Accent Lights
+    id: "nook_accent_lights_on"
+    description: "Turns Nook accent lights on at sunset if we are home or when we arrive home after sunset"
+    trigger:
+      - platform: sun
+        event: sunset
+      - platform: state
+        entity_id: input_select.home_status
+        to: "Home"
+    condition:
+      condition: and
+      conditions:
+        # 1. The house is occupied
+        - condition: state
+          entity_id: input_select.home_status
+          state: "Home"
+        # 2. The sun has set
+        - condition: sun
+          after: sunset
+        # 3. The Lights are currently off
+        - condition: state
+          entity_id: light.nook_cupboard_light
+          state: "off"
+    action:
+      - action: light.turn_on
+        target:
+          entity_id:
+            - light.nook_cupboard_light
+            - light.hue_go
+        data:
+          brightness_pct: 15
+          transition: 1
+
+  ##############
+  ## PRESENCE ##
+  ##############
+  - alias: Nook - Turn On Lights on Motion Detection
+    id: "nook_lights_on_motion"
+    description: "Turns on Nook Lights when motion is detected and it's dark outside"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.nook_pir_sensor
+        to: "on"
+    condition:
+      condition: and
+      conditions:
+        # 1. The room is either unoccupied or the mmwave sensor was triggered in the last 15 seconds. This is to avoid the cat triggering the lights as best as possible.
+        - condition: template
+          value_template: >
+            {{ is_state('binary_sensor.nook_occupancy', 'off') or
+               (is_state('binary_sensor.nook_occupancy', 'on') and
+               (as_timestamp(now()) - as_timestamp(states.binary_sensor.nook_mmwave_sensor.last_changed)) < 15) }}
+        # 2. It's dark outside
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          below: 35
+        # 3. The lights are off
+        - condition: state
+          entity_id: light.nook_ceiling
+          state: "off"
+    action:
+      - action: light.turn_on
+        entity_id: light.nook_ceiling
+
+  - alias: Nook - Turn On Lights When Dark and Occupied
+    id: "nook_lights_on_when_occupied"
+    description: Turns on Nook Lights when it is consistently dark and the room is already occupied
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: numeric_state
+        entity_id: sensor.sunlight_pct
+        below: 35
+        for:
+          minutes: 5
+    condition:
+      condition: and
+      conditions:
+        # 1. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.nook_occupancy
+          state: "on"
+        # 2. Lights are off
+        - condition: state
+          entity_id: light.nook_ceiling
+          state: "off"
+        # 3. It's dark outside
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          below: 35
+    action:
+      - action: light.turn_on
+        entity_id: light.nook_ceiling
+
+  - alias: Nook - Turn Off Lights When Light Enough
+    id: "nook_lights_off_when_light_enough"
+    description: Turns off Nook Lights when it's consistently light enough
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: numeric_state
+        entity_id: sensor.sunlight_pct
+        above: 30
+        for:
+          minutes: 5
+    condition:
+      condition: and
+      conditions:
+        # 1. The lights are on
+        - condition: state
+          entity_id: light.nook_ceiling
+          state: "on"
+        # 2. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.nook_occupancy
+          state: "on"
+        # 3. The sunlight is above the threshold
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          above: 30
+    action:
+      - action: light.turn_off
+        entity_id: light.nook_ceiling
+        data:
+          transition: 5
+
+  - alias: Nook - turn off lights when unoccupied
+    id: "nook_lights_off_when_unoccupied"
+    description: Turns off Nook Lights when occupancy is no longer detected
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.nook_occupancy
+        to: "off"
+        for:
+          minutes: 5
+    action:
+      - action: light.turn_off
+        entity_id: light.nook_ceiling
+        data:
+          transition: 5
+
+  ##############
+  ##  DIMMER  ##
+  ##############
+
+  - alias: Dim Nook Lights - with Dimmer
+    id: "nook_lights_dim"
+    description: "Dims the Nook Lights by 15% when the dimmer is rotated to the left"
+    trigger:
+      - platform: event
+        event_type: zha_event
+        event_data:
+          device_id: "0648e0fa1db37bf0a54cca38dc7aa0c4"
+          command: "rotate_type"
+          params:
+            rotate_type: 1
+    # Only dim the lights if they are on
+    condition:
+      - condition: state
+        entity_id: light.nook_ceiling
+        state: "on"
+    action:
+      - action: light.turn_on
+        entity_id: light.nook_ceiling
+        data:
+          brightness_step_pct: -15
+
+  - alias: Brighten Nook Lights - with Dimmer
+    id: "nook_lights_brighten"
+    description: "Brightens the Nook Lights by 15% when the dimmer is rotated to the right"
+    trigger:
+      - platform: event
+        event_type: zha_event
+        event_data:
+          device_id: "0648e0fa1db37bf0a54cca38dc7aa0c4"
+          command: "rotate_type"
+          params:
+            rotate_type: 0
+    action:
+      - action: light.turn_on
+        entity_id: light.nook_ceiling
+        data:
+          brightness_step_pct: 15
+
+  # - alias: Turn On Nook Lights - with Dimmer
+  #   id: "nook_lights_on"
+  #   description: "Dim the Nook Lights to 100% when the dimmer is double tapped"
+  #   trigger:
+  #     - platform: event
+  #       event_type: zha_event
+  #       event_data:
+  #         device_id: "0648e0fa1db37bf0a54cca38dc7aa0c4"
+  #         command: "on"
+  #   action:
+  #     - action: light.turn_on
+  #       entity_id: light.nook_ceiling
+  #       data:
+  #         brightness_pct: 100
+
+  - alias: Toggle Nook Lights - with Dimmer
+    id: "nook_lights_toggle"
+    description: "Toggle the Nook Lights on/off depending on their current state when the dimmer is tapped"
+    trigger:
+      - platform: event
+        event_type: zha_event
+        event_data:
+          device_id: "0648e0fa1db37bf0a54cca38dc7aa0c4"
+          command: toggle
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: light.nook_ceiling
+                state: "on"
+            sequence:
+              - action: light.turn_off
+                entity_id: light.nook_ceiling
+          - conditions:
+              - condition: state
+                entity_id: light.nook_ceiling
+                state: "off"
+            sequence:
+              - action: light.turn_on
+                entity_id: light.nook_ceiling

@@ -1,0 +1,143 @@
+mushroom_memoji_popup:
+  card:
+    type: custom:mushroom-template-card
+    entity: person.[[person]]
+    icon: mdi:home
+    picture: >
+      {% set state = states('sensor.[[person]]_friendly_location') %}
+      {% if state == 'Work' %}
+        /local/people/[[person]]_work.png
+      {% elif state == 'Lost' %}
+        /local/people/[[person]]_lost.png
+      {% elif state == 'Far Away' %}
+        /local/people/[[person]]_far_away.png
+      {% else %}
+        /local/people/[[person]]_home.png
+      {% endif %}
+    badge_icon: >
+      {% set state = states('sensor.[[person]]_friendly_location') %}
+      {% if state == 'Work' %}
+        mdi:office-building
+      {% elif state == 'Lost' %}
+        mdi:car
+      {% elif state == 'Far Away' %}
+        mdi:airplane
+      {% else %}
+        mdi:home-variant
+      {% endif %}
+    badge_color: >
+      {% set state = states('sensor.[[person]]_friendly_location') %}
+      {% if state == 'Work' %}
+        blue
+      {% elif state == 'Lost' %}
+        orange
+      {% elif state == 'Far Away' %}
+        purple
+      {% else %}
+        green
+      {% endif %}
+    tap_action:
+      action: fire-dom-event
+      browser_mod:
+        service: browser_mod.popup
+        data:
+          title: "[[person]]"
+          content:
+            type: custom:vertical-stack-in-card
+            card_mod:
+              style: |
+                ha-card {
+                  box-shadow: none;
+                }
+            cards:
+              - type: custom:mushroom-chips-card
+                chips:
+                  - type: entity
+                    entity: sensor.[[person]]s_steps
+                    tap_action:
+                      action: none
+                    double_tap_action:
+                      action: none
+                    hold_action:
+                      action: none
+                  - type: entity
+                    entity: sensor.[[person]]s_distance_walked
+                    tap_action:
+                      action: none
+                    double_tap_action:
+                      action: none
+                    hold_action:
+                      action: none
+                  - type: conditional
+                    conditions:
+                      - condition: numeric_state
+                        entity: sensor.proximity_[[person]]_from_home
+                        above: 100
+                    chip:
+                      type: template
+                      entity: sensor.proximity_[[person]]_from_home
+                      icon: mdi:map-marker-distance
+                      content: >
+                        {% set state = states('sensor.proximity_[[person]]_from_home') | float %}
+                        {% set state = state / 1000 %}
+                        {% set miles = state * 0.621371 | round(2) %}
+                        {{ miles }} mi away
+                      tap_action:
+                        action: none
+                      double_tap_action:
+                        action: none
+                      hold_action:
+                        action: none
+                  - type: entity
+                    entity: sensor.[[person]]s_iphone_battery_level
+                    tap_action:
+                      action: none
+                    double_tap_action:
+                      action: none
+                    hold_action:
+                      action: none
+
+              - type: map
+                aspect_ratio: 60%
+                default_zoom: 16
+                hours_to_show: 24
+                auto_fit: true
+                entities:
+                  - person.[[person]]
+
+    hold_action:
+      action: none
+    double_tap_action:
+      action: none
+    card_mod:
+      style:
+        mushroom-state-item$: |
+          .container {
+            padding: 0px !important;
+          }
+          .icon {
+            width: 100%;
+            height: 100%;
+          }
+        mushroom-badge-icon$: |
+          .badge {
+            --badge-size: 22px;
+          }
+        mushroom-shape-avatar$: |
+          .container {
+            width: 100% !important;
+            height: 100% !important;
+          }
+        .: |
+          mushroom-badge-icon {
+            left: 2px;
+            top: 2px;
+            right: auto;
+          }
+          ha-card {
+            background: transparent;
+            box-shadow: none;
+            padding: 0px;
+            margin: 8px 0px;
+            aspect-ratio: 1/1;
+          }

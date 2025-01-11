@@ -1,0 +1,60 @@
+# lovelace_gen
+
+- title: Kitchen Kiosk
+  path: home
+  icon: mdi:castle
+  type: custom:vertical-layout
+  layout:
+    width: 300
+    max_width: 1200
+    margin: 20px 40px
+  visible: false
+  cards:
+    - type: vertical-stack
+      cards:
+        # SPOTUFY IF PLAYING IN KITCHEN
+        # OVEN
+        # - type: conditional
+        #   conditions:
+        #     - condition: and
+        #       conditions:
+        #         - entity: sensor.paprika_today
+        #           condition: state
+        #           state_not: "unknown"
+        #   card:
+        #     type: custom:mushroom-template-card
+        #     primary: "{%raw%}{{state_attr('sensor.paprika_today','name')}}{%endraw%}"
+        #     secondary: "Today's Dinner"
+        #     icon: mdi:food
+        #     icon_color: green
+        #     tap_action:
+        #       action: navigate
+        #       navigation_path: /lovelace-kiosk/recipes/
+        #     double_tap_action:
+        #       action: none
+        #     hold_action:
+        #       action: none
+
+        - type: heading
+          heading: Music
+          icon: mdi:playlist-music
+
+        - type: custom:decluttering-card
+          template: mushroom_speaker
+          variables:
+            - entity: media_player.kitchen_speaker
+            - device_name: Kitchen
+
+        - type: heading
+          heading: Weather
+          icon: mdi:weather-sunny
+
+        - type: custom:decluttering-card
+          template: mushroom_weather_stack
+
+        - type: heading
+          heading: Vacuum
+          icon: mdi:robot-vacuum
+
+        - type: custom:decluttering-card
+          template: mushroom_vacuum

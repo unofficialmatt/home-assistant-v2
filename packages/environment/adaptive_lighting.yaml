@@ -1,0 +1,115 @@
+# @see https://github.com/basnijholt/adaptive-lighting
+# NOTE: THIS CANT BE SPLIT INTO MULTIPLE FILES OR IT WILL BREAK
+
+adaptive_lighting:
+  # DOWNSTAIRS
+  - name: Lounge
+    lights:
+      - light.lounge
+    min_brightness: 15
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Nook
+    lights:
+      - light.nook_ceiling
+    min_brightness: 15
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Kitchen
+    lights:
+      - light.kitchen_all
+    min_brightness: 15
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Downstairs Toilet
+    lights:
+      - light.downstairs_toilet
+    min_brightness: 10
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Hallway
+    lights:
+      - light.hallway
+    min_brightness: 5
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 120
+    transition: 30
+    initial_transition: 1
+
+  - name: Landing
+    lights:
+      - light.landing
+    min_brightness: 1
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 120
+    transition: 30
+    initial_transition: 1
+
+  # UPSTAIRS
+  - name: Master Bedroom
+    lights:
+      - light.master_bedroom
+    min_brightness: 5
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Guest Bedroom
+    lights:
+      - light.guest_bedroom
+    min_brightness: 5
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Man Cave
+    lights:
+      - light.man_cave
+    min_brightness: 15
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Bedroom Four
+    lights:
+      - light.bedroom_four
+    min_brightness: 5
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 30
+    initial_transition: 5
+
+  - name: Bathroom
+    lights:
+      - light.bathroom
+    min_brightness: 1
+    take_over_control: true
+    detect_non_ha_changes: true
+    interval: 60
+    transition: 15
+    initial_transition: 2

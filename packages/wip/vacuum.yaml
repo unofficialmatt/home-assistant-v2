@@ -1,0 +1,106 @@
+homeassistant:
+customize:
+  input_boolean.vacuum_kitchen:
+    room_id: "16" # TODO: Need to redefine these when the persistent map is created.
+  input_boolean.vacuum_lounge:
+    room_id: "18" # TODO: Need to redefine these when the persistent map is created.
+  input_boolean.vacuum_nook:
+    room_id: "19" # TODO: Need to redefine these when the persistent map is created.
+  input_boolean.vacuum_hallway:
+    room_id: "17" # TODO: Need to redefine these when the persistent map is created.
+
+input_boolean:
+  vacuum_kitchen:
+    name: Kitchen
+    icon: mdi:fridge
+  vacuum_lounge:
+    name: Lounge
+    icon: mdi:sofa
+  vacuum_nook:
+    name: Nook
+    icon: mdi:dice-5
+  vacuum_hallway:
+    name: Hallway
+    icon: mdi:stairs
+
+  # FOR LOVELACE UI VACUUM CARD
+  ui_vac_controls:
+    name: Vacuum Controls
+    icon: mdi:robot-vacuum
+  ui_vac_info:
+    name: Vacuum Info
+    icon: mdi:robot-vacuum
+
+input_datetime:
+  robbie_schedule:
+    name: Robbie Schedule
+    has_time: true
+    initial: "10:30"
+
+automation:
+  - alias: Daily Vacuum
+    description: "Start the vacuum cleaner at the scheduled time, or when the house becomes unoccupied"
+    id: "vacuum_daily_schedule"
+    trigger:
+      - platform: time
+        at: input_datetime.robbie_schedule
+      - platform: state
+        entity_id: input_select.home_status
+        to: "Away"
+    condition:
+      condition: and
+      conditions:
+        # The vacuum cleaner is not currently running
+        # - condition: state
+        #   entity_id: vacuum.valetudo_roborock
+        #   state: "idle" # TODO: CHECK IF THIS IS CORRECT
+        #  The Lounge is not occupied
+        - condition: state
+          entity_id: binary_sensor.lounge_occupancy
+          state: "off"
+        # The automation has not run in the last 24 hours
+        - condition: template
+          value_template: "{{ (as_timestamp(now()) - as_timestamp(states.automation.daily_vacuum.attributes.last_triggered | default(0)) | int > 24 * 60 * 60) }}"
+    action:
+      - action: vacuum.start
+        entity_id: vacuum.valetudo_roborock
+      - action: script.notify_engine
+        data:
+          TITLE: "Hoovering"
+          MESSAGE: >
+            "Triggered by: {{ trigger }}"
+          DEBUG: true
+          LOCATION: "any"
+
+group:
+  vacuum_rooms:
+    name: Vacuum Rooms
+    entities:
+      - input_boolean.vacuum_kitchen
+      - input_boolean.vacuum_lounge
+      - input_boolean.vacuum_nook
+      - input_boolean.vacuum_hallway
+
+script:
+  vacuum_clean_segments:
+    sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.vacuum_clean_segments_message
+        data:
+          variables:
+            segments:
+              '{{expand("group.vacuum_rooms") | selectattr("state","eq","on")
+              | map(attribute="attributes.room_id") | list | to_json}}'
+    mode: single
+    alias: vacuum_clean_segments
+    icon: mdi:arrow-right
+
+  vacuum_clean_segments_message:
+    alias: vacuum_clean_segments_message
+    sequence:
+      - action: mqtt.publish
+        data:
+          topic: valetudo/roborock/MapSegmentationCapability/clean/set
+          payload_template: '{"segment_ids": {{segments}},"iterations": {{ iterations }}}'
+    mode: single

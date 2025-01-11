@@ -1,0 +1,312 @@
+# TODO: SHOW WHERE ITS CURRENTLY PLAYING - could be pos absolute in the top right corner of the card
+mushroom_spotify_stack:
+  card:
+    type: custom:vertical-stack-in-card
+    card_mod:
+      style: |
+        ha-card {
+          box-shadow: none;
+        }
+    cards:
+      - type: conditional
+        conditions:
+          - entity: media_player.spotify
+            state_not: idle
+        card:
+          type: custom:mini-media-player
+          entity: media_player.spotify
+          name: "Spotify: Now Playing"
+          artwork: cover
+          tap_action:
+            action: none
+          hide:
+            icon: true
+            progress: true
+            prev: true
+            next: true
+            power: true
+            source: true
+            play_pause: true
+          card_mod:
+            style:
+              .: |
+                ha-card {
+                  aspect-ratio: 3/2;
+                }
+                .mmp-player {
+                  height: 100%;
+                  display:flex;
+                  flex-direction: column;
+                }
+                .entity__info__name {
+                  font-size: 0.9em;
+                  opacity: 0.5;
+                  margin-bottom: 0.5rem;
+                }
+                .entity__info {
+                  margin-left: 0px !important;
+                  --mmp-info-opacity: 1;
+                }
+                .mmp-player__adds {
+                  margin-top: auto;
+                }
+                .attr__media_title {
+                  display: block;
+                  font-size: 1.4em;
+                  color: white;
+                  margin-bottom: 0.25em;
+                }
+                .attr__media_artist {
+                  display: block;
+                  font-size: 1.2em;
+                  color: white;
+                }
+                .attr__media_artist::before {
+                  content: none !important;;
+                }
+
+      - type: conditional
+        conditions:
+          - entity: media_player.spotify
+            state_not: idle
+        card:
+          type: grid
+          square: false
+          columns: 5
+          cards:
+            - type: custom:mushroom-template-card
+              icon: mdi:volume-minus
+              icon_color: white
+              tap_action:
+                action: perform-action
+                perform_action: media_player.volume_down
+                target:
+                  entity_id: media_player.spotify
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    box-shadow: none;
+                  }
+
+            - type: custom:mushroom-template-card
+              icon: mdi:skip-previous
+              icon_color: blue
+              tap_action:
+                action: perform-action
+                perform_action: media_player.media_previous_track
+                target:
+                  entity_id: media_player.spotify
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    box-shadow: none;
+                  }
+
+            - type: conditional
+              conditions:
+                - entity: media_player.spotify
+                  state: "playing"
+              card:
+                type: custom:mushroom-template-card
+                icon: mdi:pause
+                icon_color: orange
+                tap_action:
+                  action: perform-action
+                  perform_action: media_player.media_pause
+                  target:
+                    entity_id: media_player.spotify
+                hold_action:
+                  action: none
+                card_mod:
+                  style: |
+                    ha-card {
+                      box-shadow: none;
+                    }
+
+            - type: conditional
+              conditions:
+                - entity: media_player.spotify
+                  state_not: "playing"
+              card:
+                type: custom:mushroom-template-card
+                icon: mdi:play
+                icon_color: green
+                tap_action:
+                  action: perform-action
+                  perform_action: media_player.media_play
+                  target:
+                    entity_id: media_player.spotify
+                hold_action:
+                  action: none
+                card_mod:
+                  style: |
+                    ha-card {
+                      box-shadow: none;
+                    }
+
+            - type: custom:mushroom-template-card
+              icon: mdi:skip-next
+              icon_color: blue
+              tap_action:
+                action: perform-action
+                perform_action: media_player.media_next_track
+                target:
+                  entity_id: media_player.spotify
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    box-shadow: none;
+                  }
+
+            - type: custom:mushroom-template-card
+              icon: mdi:volume-plus
+              icon_color: white
+              tap_action:
+                action: perform-action
+                perform_action: media_player.volume_up
+                target:
+                  entity_id: media_player.spotify
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    box-shadow: none;
+                  }
+
+      - type: custom:mushroom-select-card
+        entity: "input_select.spotify_playlists"
+        icon: mdi:playlist-music
+        icon_color: white
+        secondary_info: none
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        name: "Playlist:"
+        layout: horizontal
+        card_mod:
+          style: |
+            ha-card {
+              box-shadow: none;
+              padding-top: 8px;
+              margin-top: 8px;
+              border-top: 1px solid var(--divider-color) !important;
+            }
+
+      # todo: move this into the same line as the playlist selector
+      - type: custom:mushroom-template-card
+        icon: mdi:cached
+        icon_color: white
+        primary: "Choose a random playlist"
+        tap_action:
+          action: call-service
+          service: "script.spotify_play_random_playlist"
+        hold_action:
+          action: none
+        card_mod:
+          style: |
+            ha-card {
+              box-shadow: none;
+              padding-bottom: 0px !important;
+            }
+
+      - type: conditional
+        conditions:
+          - entity: media_player.spotify
+            state_not: idle
+        card:
+          type: heading
+          heading: Play on a speaker group
+          card_mod:
+            style:
+              .: |
+                ha-card {
+                  margin: 4px 12px;
+                }
+                .title {
+                  width: 100%;
+                }
+                .title > p {
+                  text-align: center;
+                  width: 100%;
+                  font-weight: 500;
+                }
+
+      - type: conditional
+        conditions:
+          - entity: media_player.spotify
+            state_not: idle
+        card:
+          type: grid
+          square: false
+          columns: 3
+          cards:
+            - type: custom:mushroom-template-card
+              icon: mdi:home-group
+              primary: "Whole Home"
+              icon_color: white
+              badge_icon: >-
+                {{ 'mdi:play' if is_state_attr('media_player.spotify', 'source', 'Whole Home') }}
+              badge_color: >-
+                {{ 'green' if is_state_attr('media_player.spotify', 'source', 'Whole Home') }}
+              tap_action:
+                action: call-service
+                service: script.spotify_takeover
+                data:
+                  device_name: "Whole Home"
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    box-shadow: none;
+                  }
+            - type: custom:mushroom-template-card
+              icon: mdi:sofa
+              primary: "Upstairs"
+              icon_color: white
+              badge_icon: >-
+                {{ 'mdi:play' if is_state_attr('media_player.spotify', 'source', 'Upstairs') }}
+              badge_color: >-
+                {{ 'green' if is_state_attr('media_player.spotify', 'source', 'Upstairs') }}
+              tap_action:
+                action: call-service
+                service: script.spotify_takeover
+                data:
+                  device_name: "Upstairs"
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    box-shadow: none;
+                  }
+            - type: custom:mushroom-template-card
+              icon: mdi:bed-queen
+              primary: "Downstairs"
+              icon_color: white
+              badge_icon: >-
+                {{ 'mdi:play' if is_state_attr('media_player.spotify', 'source', 'Downstairs') }}
+              badge_color: >-
+                {{ 'green' if is_state_attr('media_player.spotify', 'source', 'Downstairs') }}
+              tap_action:
+                action: call-service
+                service: script.spotify_takeover
+                data:
+                  device_name: "Downstairs"
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    box-shadow: none;
+                  }

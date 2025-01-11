@@ -1,32 +1,65 @@
-# Required by Minimalist UI
-# @see https://ui-lovelace-minimalist.netlify.app/installation/ui-mode
+# https://community.home-assistant.io/t/mushroom-cards-card-mod-styling-config-guide/600472/1037
+# https://community.home-assistant.io/t/mushroom-inspiration/484525/132
+
+# TODO: SOME OF THESE CAN PROBABLY BE REMOVED AFTER REPLACING WITH MUSHROOM
 - url: /hacsfiles/button-card/button-card.js
   type: module
 - url: /hacsfiles/mini-graph-card/mini-graph-card-bundle.js
   type: module
+
+# Kiosk Mode used for kitchen display
+- url: /hacsfiles/kiosk-mode/kiosk-mode.js
+  type: module
+
 - url: /hacsfiles/mini-media-player/mini-media-player-bundle.js
   type: module
-- url: /hacsfiles/my-cards/my-cards.js
+
+- url: /hacsfiles/frigate-hass-card/frigate-hass-card.js
   type: module
-- url: /hacsfiles/light-entity-card/light-entity-card.js
-  type: module
-- url: /hacsfiles/simple-weather-card/simple-weather-card-bundle.js
-  type: module
+
+# - url: /hacsfiles/simple-weather-card/simple-weather-card-bundle.js
+#   type: module
+
+# Auto Entities, useful for dynamic cards
 - url: /hacsfiles/lovelace-auto-entities/auto-entities.js
   type: module
 
-# Swipe Navigation
-- url: /hacsfiles/hass-swipe-navigation/swipe-navigation.js
+# Required by Custom Mushroom Cards
+- url: /hacsfiles/vertical-stack-in-card/vertical-stack-in-card.js
   type: module
+
+# Decluttering Card
+- url: /hacsfiles/decluttering-card/decluttering-card.js
+  type: module
+
+# Mushroom Card
+- url: /hacsfiles/lovelace-mushroom/mushroom.js
+  type: module
+
+# Swipe Navigation
+# - url: /hacsfiles/hass-swipe-navigation/swipe-navigation.js
+#   type: module
 
 # Valetudo Map Card
 - url: /hacsfiles/lovelace-valetudo-map-card/valetudo-map-card.js
   type: module
 
+# Vacuum Card
+- url: /hacsfiles/vacuum-card/vacuum-card.js
+  type: module
+
 # Upcoming Media Card
-- url: /hacsfiles/upcoming-media-card/upcoming-media-card.js?v=0.1.1
-  type: js
+# - url: /hacsfiles/upcoming-media-card/upcoming-media-card.js?v=0.1.1
+#   type: js
 
 # LAYOUT CARD
 - url: /hacsfiles/lovelace-layout-card/layout-card.js
   type: module
+
+# STATE SWITCH - used for conditional cards based on attributes, and for the recipe view
+- url: /hacsfiles/lovelace-state-switch/state-switch.js
+  type: module
+
+# Custom JS from /www
+- url: /local/custom-lovelace.js
+  type: js

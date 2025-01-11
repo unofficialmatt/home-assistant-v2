@@ -1,0 +1,213 @@
+# lovelace_gen
+# TODO: Add in cupboard + CD lights when they are working.
+
+# TODO: 3d print card like the roobie.
+
+{% set lights = { 'Ceiling': 'man_cave_colour', 'Desk Lamp': 'man_cave_lamp' } %}
+{% set switches = { 'Power Bank': 'man_cave_power_bank', 'USBs': 'man_cave_power_bank_usbs', 'Piano': 'electric_piano', 'Monitor': 'man_cave_monitor', 'Wax Melt': 'man_cave_scent', 'Desk': 'man_cave_standing_desk' } %}
+{% set batteries = { 'Dimmer': 'man_cave_dimmer_battery', 'Radiator': 'man_cave_radiator_battery_level' } %}
+
+- title: Matt's Office
+  path: man_cave
+  type: custom:grid-layout
+  icon: mdi:laptop
+  layout:
+    grid-template-columns: 1fr 1fr 1fr
+    grid-template-rows: auto
+    grid-gap: 12px
+    margin: 20px
+    grid-template-areas: |
+      "header chips chips"
+      "col1 col2 col3"
+    mediaquery:
+      "(max-width: 500px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "chips chips"
+          "header header"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 900px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 1200px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col3"
+          "col2 col3"
+          "col2 ."
+  cards:
+
+    # GRID AREA HEADER
+    - type: custom:decluttering-card
+      template: mushroom_view_header
+      view_layout:
+        grid-area: header
+      variables:
+        - room: Matt's Office
+
+    # GRID AREA CHIPS
+    - type: custom:decluttering-card
+      template: mushroom_chips
+      view_layout:
+        grid-area: chips
+      variables:
+        - occupancy_sensor: binary_sensor.man_cave_occupancy
+
+    # GRID AREA COL1
+    - type: vertical-stack
+      view_layout:
+        grid-area: col1
+      cards:
+
+        - type: custom:frigate-card
+          cameras:
+            - camera_entity: camera.aarlo_front_door
+
+        - type: picture-glance
+          title: Doorbell
+          entities: []
+          camera_image: camera.aarlo_front_door
+
+        - type: heading
+          heading: Lights
+          icon: mdi:lightbulb-on-outline
+          badges:
+            - type: entity
+              entity: light.man_cave
+              tap_action:
+                action: toggle
+              show_state: true
+              color: state
+
+
+        - type: custom:decluttering-card
+          template: mushroom_scene_select
+          variables:
+            - room: man_cave
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+            {% for key, val in lights.items() %}
+            - type: custom:mushroom-light-card
+              entity: light.{{ val }}
+              name: "{{ key }}"
+              use_light_color: true
+              show_brightness_control: true
+              # show_color_temp_control: true
+              # show_color_control: true
+              collapsible_controls: true
+            {% endfor %}
+
+    # GRID AREA COL2
+    - type: vertical-stack
+      view_layout:
+        grid-area: col2
+      cards:
+
+        - type: heading
+          heading: Heating
+          icon: mdi:radiator
+          badges:
+            - type: entity
+              entity: sensor.man_cave_temperature
+              show_state: true
+              show_icon: false
+
+        - type: custom:mushroom-climate-card
+          entity: climate.man_cave
+          name: Radiator
+          icon: mdi:thermometer
+          show_temperature_control: true
+          collapsible_controls: true
+          tap_action:
+            action: more-info
+
+        - type: heading
+          heading: Switches
+          icon: mdi:power-socket-uk
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+          {% for key, val in switches.items() %}
+          - type: custom:decluttering-card
+            template: mushroom_switch
+            variables:
+              - entity_id: switch.{{ val }}
+              - title: "{{ key }}"
+          {% endfor %}
+
+          - type: custom:decluttering-card
+            template: mushroom_switch
+            variables:
+              - entity_id: switch.3d_printer
+              - title: 3D Printer
+
+        - type: heading
+          heading: Settings
+          icon: mdi:cog-outline
+
+        - type: custom:decluttering-card
+          template: mushroom_boolean
+          variables:
+            - entity_id: input_boolean.guests_staying_man_cave
+            - title: Guests Staying?
+            - icon: mdi:account
+
+    # GRID AREA COL3
+    - type: vertical-stack
+      view_layout:
+        grid-area: col3
+      cards:
+
+        - type: heading
+          heading: Sensors
+          icon: mdi:graph
+
+        - type: heading
+          heading: Environment
+          heading_style: subtitle
+
+        - type: custom:decluttering-card
+          template: mushroom_graph
+          variables:
+            - entity_one: sensor.man_cave_temperature
+            - entity_one_name: Temperature
+
+        - type: heading
+          heading: Energy Usage
+          heading_style: subtitle
+
+        - type: custom:decluttering-card
+          template: mushroom_graph
+          variables:
+            - entity_one: sensor.3d_printer_power
+            - entity_one_name: 3D Printer
+
+        - type: heading
+          heading: Batteries
+          heading_style: subtitle
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            {% for key, val in batteries.items() %}
+            - type: custom:decluttering-card
+              template: mushroom_battery
+              variables:
+                - entity_id: sensor.{{ val }}
+                - title: "{{ key }}"
+            {% endfor %}

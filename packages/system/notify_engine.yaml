@@ -1,0 +1,132 @@
+# https://community.home-assistant.io/t/notify-alert-only-people-present-in-the-house-howto/277736/4
+
+# Dummy notify service to use when no one is home
+notify:
+  - name: Dummy
+    platform: rest
+    resource: http://localhost:0000/notify
+
+# automation:
+#   - alias: Test Notify Debug
+#     id: "t"
+#     trigger:
+#       platform: state
+#       entity_id: input_boolean.test_notify_engine
+#       to: "on"
+#     action:
+#       - action: script.notify_engine
+#         data:
+#           TITLE: "DEBUG"
+#           MESSAGE: "This is the message to send"
+#           DEBUG: false
+#           INTERUPTION_MODE: "critical"
+#           LOCATION: "any"
+#           IMAGE_URL: "https://www.home-assistant.io/images/default-social.png" # Optional image URL
+
+script:
+  notify_engine:
+    alias: Notify Engine
+    mode: parallel
+    fields:
+      TITLE:
+        description: "Title of the notification"
+        example: "Washing done"
+        required: true
+      MESSAGE:
+        description: "Message of the notification"
+        example: "The washing is complete"
+        required: true
+      LOCATION:
+        description: "Location state of people to notify"
+        example: "home"
+        default: "any"
+        required: false
+      INTERUPTION_MODE:
+        description: "The interruption level of the notification"
+        example: "critical"
+        default: "active"
+        required: false
+      DEBUG:
+        description: "Only send messages to Matt"
+        example: false
+        default: false
+        required: false
+      IMAGE_URL:
+        description: "URL of the image to include in the notification"
+        example: "https://www.home-assistant.io/images/default-social.png"
+        required: false
+      URL:
+        description: "URL to open when the notification is clicked"
+        example: "https://www.home-assistant.io"
+        required: false
+    sequence:
+      - variables:
+          NOTIFIERS: >
+            {% if LOCATION == "any" and DEBUG == "true"  %}
+              {{ states.person | selectattr("entity_id", "eq", "person.matt") |  map(attribute='attributes.notifier') | list }}
+            {% elif LOCATION == "any" %}
+              {{ states.person | map(attribute='attributes.notifier') | list }}
+            {% elif DEBUG == "true" %}
+              {{ states.person | selectattr("entity_id", "eq", "person.matt") | selectattr('state', 'eq', LOCATION) | map(attribute='attributes.notifier') | list }}
+            {% else %}
+              {{ states.person | selectattr('state', 'eq', LOCATION) | map(attribute='attributes.notifier') | list }}
+            {% endif %}
+          IMAGE: "{{ IMAGE_URL if IMAGE_URL is defined else none }}"
+          LINK_URL: "{{ URL if URL is defined else none }}"
+          INTERUPTION_MODE: "{{ INTERUPTION_MODE }}"
+      # Iterate through all the people and send the relevant notification
+      - repeat:
+          count: "{{ NOTIFIERS | count }}"
+          sequence:
+            - variables:
+                NOTIFIER: "{{ NOTIFIERS[repeat.index - 1] }}"
+                IMAGE_URL: "{{ IMAGE }}"
+                URL: "{{ LINK_URL }}"
+                INTERUPTION_MODE: "{{ INTERUPTION_MODE }}"
+            - action: "{{ NOTIFIER }}"
+              data:
+                title: "{{ TITLE }}"
+                message: "{{ MESSAGE }}"
+                data:
+                  push:
+                    interruption-level: "{{ INTERUPTION_MODE }}"
+                  image: >
+                    {% if IMAGE_URL is defined %}
+                      {{ IMAGE_URL }}
+                    {% else %}
+                      none
+                    {% endif %}
+                  url: >
+                    {% if URL is defined %}
+                      {{ URL }}
+                    {% else %}
+                      none
+                    {% endif %}
+
+      # Matt's MBP
+      - action: >
+          {% if LOCATION == "any" and is_state('binary_sensor.matts_mbp_active', 'on') %}
+              notify.mobile_app_matts_mbp
+          {% elif is_state('device_tracker.matts_mbp', LOCATION) and is_state('binary_sensor.matts_mbp_active', 'on') %}
+              notify.mobile_app_matts_mbp
+          {% else %}
+              notify.dummy
+          {% endif %}
+        data:
+          title: "{{ TITLE }}"
+          message: "{{ MESSAGE }}"
+          data:
+            push:
+              interruption-level: "{{ INTERUPTION_MODE }}"
+            image: >
+              {% if IMAGE_URL is defined %}
+                {{ IMAGE_URL }}
+              {% else %}
+                none
+              {% endif %}
+            url: >
+              {% if URL is defined %}
+                {{ URL }}
+              {% else %}
+                none
+              {% endif %}

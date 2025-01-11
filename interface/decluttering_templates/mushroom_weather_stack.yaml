@@ -1,0 +1,107 @@
+mushroom_weather_stack:
+  card:
+    type: custom:vertical-stack-in-card
+    card_mod:
+      style: |
+        ha-card {
+          box-shadow: none;
+        }
+    cards:
+      - type: custom:mushroom-chips-card
+        card_mod:
+          style: |
+            .chip-container {
+              justify-content: space-between !important;;
+            }
+        chips:
+          - type: entity
+            entity: sun.sun
+            tap_action:
+              action: none
+            double_tap_action:
+              action: none
+            hold_action:
+              action: none
+            card_mod:
+              style:
+                .: |
+                  ha-card {
+                    --chip-font-size: 1rem;
+                    --chip-padding: 0 1.25rem;
+                  }
+          - type: template
+            content: >-
+              Sunrise  {% if states.sun.sun %} {{
+              (as_timestamp(states.sun.sun.attributes.next_rising)) |
+              timestamp_custom(('%H:%M') )}} {% endif %}
+            icon: mdi:weather-sunset-up
+            tap_action:
+              action: none
+            double_tap_action:
+              action: none
+            hold_action:
+              action: none
+            card_mod:
+              style:
+                .: |
+                  ha-card {
+                    --chip-font-size: 1rem;
+                    --chip-padding: 0 1.25rem;
+                  }
+          - type: template
+            content: >-
+              Sunset  {% if states.sun.sun %} {{
+              (as_timestamp(states.sun.sun.attributes.next_setting)) |
+              timestamp_custom(('%H:%M') )}} {% endif %}
+            icon: mdi:weather-sunset-down
+            tap_action:
+              action: none
+            double_tap_action:
+              action: none
+            hold_action:
+              action: none
+            card_mod:
+              style:
+                .: |
+                  ha-card {
+                    --chip-font-size: 1rem;
+                    --chip-padding: 0 1.25rem;
+                  }
+          - type: entity
+            entity: sensor.moon_phase
+            tap_action:
+              action: none
+            double_tap_action:
+              action: none
+            hold_action:
+              action: none
+            card_mod:
+              style:
+                .: |
+                  ha-card {
+                    --chip-font-size: 1rem;
+                    --chip-padding: 0 1.25rem;
+
+                  }
+      - type: weather-forecast
+        show_current: true
+        show_forecast: true
+        entity: weather.pirateweather
+        forecast_type: daily
+        tap_action:
+          action: none
+        double_tap_action:
+          action: none
+        hold_action:
+          action: none
+      - type: weather-forecast
+        show_current: false
+        show_forecast: true
+        entity: weather.pirateweather
+        forecast_type: hourly
+        tap_action:
+          action: none
+        double_tap_action:
+          action: none
+        hold_action:
+          action: none

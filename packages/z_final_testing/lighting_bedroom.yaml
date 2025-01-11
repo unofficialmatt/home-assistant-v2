@@ -1,0 +1,306 @@
+input_select:
+  master_bedroom_light_mode:
+    name: Master Bedroom Scene Selector
+    options:
+      - Adaptive
+      - Read
+      - Relax
+      - Rest
+      - Energise
+      - Concentrate
+      - Dreamy Dusk
+      - Ruby Romance
+      - Starlight
+    initial: Adaptive
+    icon: mdi:lightbulb
+
+automation:
+  ##############
+  ## PRESENCE ##
+  ##############
+
+  - alias: Master Bedroom - Turn On Lights on Motion Detection
+    id: "master_bedroom_lights_on_motion"
+    description: "Turns on Master Bedroom Lights when motion is detected and it's dark outside"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_pir_sensor
+        to: "on"
+    condition:
+      condition: and
+      conditions:
+        # 1. The room is either unoccupied or the mmwave sensor was triggered in the last 15 seconds. This is to avoid the cat triggering the lights as best as possible.
+        - condition: template
+          value_template: >
+            {{ is_state('binary_sensor.master_bedroom_occupancy', 'off') or
+               (is_state('binary_sensor.master_bedroom_occupancy', 'on') and
+               (as_timestamp(now()) - as_timestamp(states.binary_sensor.master_bedroom_mmwave_sensor.last_changed)) < 15) }}
+        # 2. It's dark outside
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          below: 35
+        # 3. The lights are off
+        - condition: state
+          entity_id: light.master_bedroom
+          state: "off"
+        # 4. Sleep mode is currently set to Off
+        - condition: template
+          value_template: "{{ float(states('input_number.master_bedroom_bedtime_status')) == 0.0 }}"
+    action:
+      # TODO: Set a sleep mode scene
+      - action: light.turn_on
+        entity_id: light.master_bedroom
+
+  - alias: Master Bedroom - Turn On Lights When Dark and Occupied
+    id: "master_bedroom_lights_on_when_occupied"
+    description: Turns on Master Bedroom Lights when it is consistently dark and the room is already occupied
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: numeric_state
+        entity_id: sensor.sunlight_pct
+        below: 35
+        for:
+          minutes: 5
+    condition:
+      condition: and
+      conditions:
+        # 1. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.master_bedroom_occupancy
+          state: "on"
+        # 2. Lights are off
+        - condition: state
+          entity_id: light.master_bedroom
+          state: "off"
+        # 3. It's dark outside
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          below: 35
+        # 4. Sleep mode is currently set to Off
+        - condition: template
+          value_template: "{{ float(states('input_number.master_bedroom_bedtime_status')) == 0.0 }}"
+    action:
+      # TODO: Set a sleep mode scene
+      - action: light.turn_on
+        entity_id: light.master_bedroom
+
+  - alias: Master Bedroom - Turn Off Lights When Light Enough
+    id: "master_bedroom_lights_off_when_light_enough"
+    description: Turns off Master Bedroom Lights when it's consistently light enough
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: numeric_state
+        entity_id: sensor.sunlight_pct
+        above: 30
+        for:
+          minutes: 5
+    condition:
+      condition: and
+      conditions:
+        # 1. The lights are on
+        - condition: state
+          entity_id: light.master_bedroom
+          state: "on"
+        # 2. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.master_bedroom_occupancy
+          state: "on"
+        # 3. The sunlight is above the threshold
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          above: 30
+    action:
+      - action: light.turn_off
+        entity_id: light.master_bedroom
+        data:
+          transition: 5
+
+  - alias: Master Bedroom - turn off lights when unoccupied
+    id: "master_bedroom_lights_off_when_unoccupied"
+    description: Turns off Master Bedroom Lights when occupancy is no longer detected
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_occupancy
+        to: "off"
+        for:
+          minutes: 5
+    condition:
+      # 1. Sleep mode is currently set to Off
+      - condition: template
+        value_template: "{{ float(states('input_number.master_bedroom_bedtime_status')) == 0.0 }}"
+    action:
+      - action: light.turn_off
+        entity_id: light.master_bedroom
+        data:
+          transition: 5
+
+  ##############
+  ##  DIMMER  ##
+  ##############
+  - alias: Master Bedroom - Scene Cycle
+    id: "master_bedroom_scene_cycle"
+    description: "Cycles through Master Bedroom Scenes when Hue Switch 4 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "master_bedroom_dimmer_button"
+          type: short_release
+          subtype: 4
+    action:
+      - action: input_select.select_next
+        entity_id: input_select.master_bedroom_light_mode
+
+  - alias: Master Bedroom - Force Adaptive Lighting
+    id: "master_bedroom_force_adaptive_lighting"
+    description: "Forces Adaptive Lighting in Master Bedroom when Hue Switch 4 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "master_bedroom_dimmer_button"
+          type: long_release
+          subtype: 4
+    action:
+      - action: input_select.select_option
+        entity_id: input_select.master_bedroom_light_mode
+        data:
+          option: Adaptive
+
+  - alias: Master Bedroom - Scene Set
+    id: "master_bedroom_scene_set"
+    description: "Sets the Master Bedroom Scene when the Input Select is changed"
+    trigger:
+      - platform: state
+        entity_id: input_select.master_bedroom_light_mode
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_select.master_bedroom_light_mode
+                state: "Adaptive"
+            sequence:
+              - action: adaptive_lighting.set_manual_control
+                data:
+                  entity_id: switch.adaptive_lighting_master_bedroom
+                  manual_control: false
+
+          - conditions:
+              - condition: template
+                value_template: "{{ not is_state('input_select.master_bedroom_light_mode', 'Adaptive') }}"
+            sequence:
+              - action: scene.turn_on
+                data_template:
+                  entity_id: >
+                    scene.master_bedroom_{{ states('input_select.master_bedroom_light_mode') | lower | replace(' ', '_') }}
+
+  - alias: Master Bedroom - Light Brightness up 5%
+    id: "master_bedroom_light_brightness_up"
+    description: "Turns Master Bedroom Lights brightness up 5% when Hue Switch 2 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "master_bedroom_dimmer_button"
+          type: short_release
+          subtype: 2
+    action:
+      - action: light.turn_on
+        entity_id: light.master_bedroom
+        data:
+          brightness_step_pct: 5
+
+  - alias: Master Bedroom - Light Brightness up continued
+    id: "master_bedroom_light_brightness_up_long"
+    description: "Turns Master Bedroom Lights brightness up 10% incrementally when Hue Switch 2 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "master_bedroom_dimmer_button"
+          type: repeat
+          subtype: 2
+    action:
+      - action: light.turn_on
+        entity_id: light.master_bedroom
+        data:
+          brightness_step_pct: 15
+
+  - alias: Master Bedroom - Light Brightness down 5%
+    id: "master_bedroom_light_brightness_down"
+    description: "Turns Master Bedroom Lights brightness down 5% when Hue Switch 3 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "master_bedroom_dimmer_button"
+          type: short_release
+          subtype: 3
+    condition:
+      - condition: state
+        entity_id: light.master_bedroom
+        state: "on"
+    action:
+      - action: light.turn_on
+        entity_id: light.master_bedroom
+        data:
+          brightness_step_pct: -5
+
+  - alias: Master Bedroom - Light Brightness down continued
+    id: "master_bedroom_light_brightness_down_long"
+    description: "Turns Master Bedroom Lights brightness down 10% incrementally when Hue Switch 3 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "master_bedroom_dimmer_button"
+          type: repeat
+          subtype: 3
+    condition:
+      - condition: state
+        entity_id: light.master_bedroom
+        state: "on"
+    action:
+      - action: light.turn_on
+        entity_id: light.master_bedroom
+        data:
+          brightness_step_pct: -15
+
+  - alias: Master Bedroom - Toggle lights
+    id: "master_bedroom_light_toggle"
+    description: "Toggle Master Bedroom Lights when Hue Switch 1 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "master_bedroom_dimmer_button"
+          type: short_release
+          subtype: 1
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "master_bedroom_dimmer_button"
+          type: long_release
+          subtype: 1
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: light.master_bedroom
+                state: "on"
+            sequence:
+              - action: light.turn_off
+                entity_id: light.master_bedroom
+                data:
+                  transition: 2
+          - conditions:
+              - condition: state
+                entity_id: light.master_bedroom
+                state: "off"
+            sequence:
+              - action: light.turn_on
+                entity_id: light.master_bedroom
+                data:
+                  transition: 2

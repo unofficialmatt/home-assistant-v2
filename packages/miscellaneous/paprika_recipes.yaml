@@ -1,0 +1,214 @@
+rest_command:
+  paprika_remove_meal:
+    url: "https://experiments.weareboba.com/paprika/?endpoint=removeMeal&uid={{ uid }}"
+    method: GET
+    username: !secret paprika_username
+    password: !secret paprika_password
+
+script:
+  paprika_remove_meal:
+    alias: "Remove Meal from Paprika"
+    fields:
+      uid:
+        description: "UID of the meal to remove"
+        example: "57497527-9457-4073-912C-9086695A5772"
+        required: true
+    sequence:
+      - action: rest_command.paprika_remove_meal
+        data:
+          uid: "{{ uid }}"
+      - action: homeassistant.update_entity
+        entity_id:
+          - sensor.paprika_today
+          - sensor.paprika_1_day
+          - sensor.paprika_2_days
+          - sensor.paprika_3_days
+          - sensor.paprika_4_days
+          - sensor.paprika_5_days
+          - sensor.paprika_6_days
+          - sensor.paprika_minus_1_days
+          - sensor.paprika_minus_2_days
+          - sensor.paprika_minus_3_days
+
+sensor:
+  - platform: rest
+    unique_id: paprika_0_day
+    resource: https://experiments.weareboba.com/paprika/?endpoint=meal
+    name: Paprika Today
+    authentication: basic
+    username: !secret paprika_username
+    password: !secret paprika_password
+    value_template: "{{ value_json.result.name | default('Unknown') }}"
+    json_attributes_path: "$.result"
+    json_attributes:
+      - name
+      - date
+      - ingredients
+      - directions
+      - photo_url
+      - source_url
+      - servings
+      - uid
+  - platform: rest
+    unique_id: paprika_1_day
+    resource: https://experiments.weareboba.com/paprika/?endpoint=meal&offset=1
+    name: Paprika +1 Day
+    authentication: basic
+    username: !secret paprika_username
+    password: !secret paprika_password
+    value_template: "{{ value_json.result.name | default('Unknown') }}"
+    json_attributes_path: "$.result"
+    json_attributes:
+      - name
+      - date
+      - ingredients
+      - directions
+      - photo_url
+      - source_url
+      - servings
+      - uid
+  - platform: rest
+    unique_id: paprika_2_day
+    resource: https://experiments.weareboba.com/paprika/?endpoint=meal&offset=2
+    name: Paprika +2 Days
+    authentication: basic
+    username: !secret paprika_username
+    password: !secret paprika_password
+    value_template: "{{ value_json.result.name | default('Unknown') }}"
+    json_attributes_path: "$.result"
+    json_attributes:
+      - name
+      - date
+      - ingredients
+      - directions
+      - photo_url
+      - source_url
+      - servings
+      - uid
+  - platform: rest
+    unique_id: paprika_3_day
+    resource: https://experiments.weareboba.com/paprika/?endpoint=meal&offset=3
+    name: Paprika +3 Days
+    authentication: basic
+    username: !secret paprika_username
+    password: !secret paprika_password
+    value_template: "{{ value_json.result.name | default('Unknown') }}"
+    json_attributes_path: "$.result"
+    json_attributes:
+      - name
+      - date
+      - ingredients
+      - directions
+      - photo_url
+      - source_url
+      - servings
+      - uid
+  - platform: rest
+    unique_id: paprika_4_day
+    resource: https://experiments.weareboba.com/paprika/?endpoint=meal&offset=4
+    name: Paprika +4 Days
+    authentication: basic
+    username: !secret paprika_username
+    password: !secret paprika_password
+    value_template: "{{ value_json.result.name | default('Unknown') }}"
+    json_attributes_path: "$.result"
+    json_attributes:
+      - name
+      - date
+      - ingredients
+      - directions
+      - photo_url
+      - source_url
+      - servings
+      - uid
+  - platform: rest
+    unique_id: paprika_5_day
+    resource: https://experiments.weareboba.com/paprika/?endpoint=meal&offset=5
+    name: Paprika +5 Days
+    authentication: basic
+    username: !secret paprika_username
+    password: !secret paprika_password
+    value_template: "{{ value_json.result.name | default('Unknown') }}"
+    json_attributes_path: "$.result"
+    json_attributes:
+      - name
+      - date
+      - ingredients
+      - directions
+      - photo_url
+      - source_url
+      - servings
+      - uid
+  - platform: rest
+    unique_id: paprika_6_day
+    resource: https://experiments.weareboba.com/paprika/?endpoint=meal&offset=6
+    name: Paprika +6 Days
+    authentication: basic
+    username: !secret paprika_username
+    password: !secret paprika_password
+    value_template: "{{ value_json.result.name | default('Unknown') }}"
+    json_attributes_path: "$.result"
+    json_attributes:
+      - name
+      - date
+      - ingredients
+      - directions
+      - photo_url
+      - source_url
+      - servings
+      - uid
+  - platform: rest
+    unique_id: paprika_minus_1_day
+    resource: https://experiments.weareboba.com/paprika/?endpoint=meal&offset=-1
+    name: Paprika Minus 1 Days
+    authentication: basic
+    username: !secret paprika_username
+    password: !secret paprika_password
+    value_template: "{{ value_json.result.name | default('Unknown') }}"
+    json_attributes_path: "$.result"
+    json_attributes:
+      - name
+      - date
+      - ingredients
+      - directions
+      - photo_url
+      - source_url
+      - servings
+      - uid
+  - platform: rest
+    unique_id: paprika_minus_2_day
+    resource: https://experiments.weareboba.com/paprika/?endpoint=meal&offset=-2
+    name: Paprika Minus 2 Days
+    authentication: basic
+    username: !secret paprika_username
+    password: !secret paprika_password
+    value_template: "{{ value_json.result.name | default('Unknown') }}"
+    json_attributes_path: "$.result"
+    json_attributes:
+      - name
+      - date
+      - ingredients
+      - directions
+      - photo_url
+      - source_url
+      - servings
+      - uid
+  - platform: rest
+    unique_id: paprika_minus_3_day
+    resource: https://experiments.weareboba.com/paprika/?endpoint=meal&offset=-3
+    name: Paprika Minus 3 Days
+    authentication: basic
+    username: !secret paprika_username
+    password: !secret paprika_password
+    value_template: "{{ value_json.result.name | default('Unknown') }}"
+    json_attributes_path: "$.result"
+    json_attributes:
+      - name
+      - date
+      - ingredients
+      - directions
+      - photo_url
+      - source_url
+      - servings
+      - uid
+# TODO: Send item to grocery list, the endpoint is there. Just want to do it via Google intent

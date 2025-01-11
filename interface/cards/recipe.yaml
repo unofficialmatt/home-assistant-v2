@@ -1,0 +1,73 @@
+# lovelace_gen
+# eventually it would be good to replace this with mushroom card, but mushroom doesnt preserve line breaks
+---
+recipe_ingredients:
+  show_state: false
+  show_icon: false
+  show_name: false
+  show_label: false
+  tap_action:
+    action: none
+  styles:
+    grid:
+      - grid-template-areas: '"info"'
+      - grid-template-columns: 1fr
+  custom_fields:
+    info: >
+      [[[
+        return `
+        <div id="ingredients" class="wrap"><h3 style="margin-top:0">Ingredients: </h3>${entity.attributes.ingredients.replace(/\n/g, '<br>')}</div>
+        `;
+      ]]]
+  extra_styles: >
+    #card {
+      background: none;
+      box-shadow: none;
+      padding: 0;
+      border-radius: 0;
+    }
+    .wrap {
+      white-space: normal;
+      text-align: left;
+    }
+    @media (max-width: 767px) {
+        #container {
+          grid-template-areas: "left" "right";
+          grid-template-columns: 1fr;
+        }
+      }
+
+recipe_method:
+  show_state: false
+  show_icon: false
+  show_name: false
+  show_label: false
+  tap_action:
+    action: none
+  styles:
+    grid:
+      - grid-template-areas: '"info"'
+      - grid-template-columns: 1fr
+  custom_fields:
+    info: >
+      [[[
+        return `<div id="directions" class="wrap"><h3 style="margin-top:0">Directions: </h3>${entity.attributes.directions.replace(/\n/g, '<br>')}</div>`;
+      ]]]
+
+  extra_styles: >
+    #card {
+      background: none;
+      box-shadow: none;
+      padding: 0;
+      border-radius: 0;
+    }
+    .wrap {
+      white-space: normal;
+      text-align: left;
+    }
+    @media (max-width: 767px) {
+        #container {
+          grid-template-areas: "left" "right";
+          grid-template-columns: 1fr;
+        }
+      }

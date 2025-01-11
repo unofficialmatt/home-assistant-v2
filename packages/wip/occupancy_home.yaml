@@ -1,0 +1,143 @@
+binary_sensor:
+  - platform: group
+    name: "House Occupancy"
+    device_class: occupancy
+    entities:
+      - binary_sensor.bathroom_occupancy
+      - binary_sensor.guest_bedroom_occupancy
+      - binary_sensor.bedroom_four_occupancy
+      - binary_sensor.kitchen_occupancy
+      - binary_sensor.lounge_occupancy
+      - binary_sensor.man_cave_occupancy
+      - binary_sensor.master_bedroom_occupancy
+      - binary_sensor.nook_occupancy
+      - binary_sensor.toilet_occupancy
+      - group.hallway_motion
+      - group.landing_motion
+
+input_select:
+  home_status:
+    name: Home Status
+    options:
+      - Home
+      - Away
+      - Holiday
+    initial: Home
+    icon: mdi:home-account
+
+input_boolean:
+  # Used to temporarily override the home status, eg. if the pet sitter pops in when we're on holiday
+  home_occupancy_override:
+    name: Home Occupancy Override
+    initial: false
+    icon: mdi:home-account
+
+automation:
+  - alias: Home Status Change
+    id: "home_status_change"
+    description: Toggles home status Home/Away based on the status of group.occupants
+    trigger:
+      - platform: state
+        entity_id: group.occupants
+    action:
+      - action: input_select.select_option
+        data:
+          entity_id: input_select.home_status
+          option: >
+            {% if is_state('group.occupants', 'home') %}
+              Home
+            {% else %}
+              Away
+            {% endif %}
+  # ACTIVATE HOLIDAY MODE
+  - alias: Home Status - Activate Holiday Mode
+    id: "home_status_activate_holiday_mode"
+    description: "If the home is set to Away for 24 hours, set the home status to Holiday"
+    trigger:
+      - platform: state
+        entity_id: input_select.home_status
+        to: "Away"
+        for:
+          hours: 24
+    action:
+      - service: input_select.select_option
+        data_template:
+          entity_id: input_select.home_status
+          option: Holiday
+
+  - alias: "Home Status - Away Actions"
+    id: "home_status_away_actions"
+    description: Runs actions when the home is set to Away mode
+    trigger:
+      - platform: state
+        entity_id: input_select.home_status
+        to: "Away"
+    action:
+      - action: script.turn_on
+        entity_id: script.turn_off_all_hardware
+
+  # SEND NOTIFICATION OF STATUS CHANGE
+  - alias: Home Status - Notify
+    id: "home_status_notify"
+    description: "Sends a notification when the home status is updated"
+    trigger:
+      - platform: state
+        entity_id: input_select.home_status
+    action:
+      - service: notify.mobile_app_matts_iphone
+        data_template:
+          title: >
+            {% if is_state("input_select.home_status", "Holiday") %} {{ "\uD83C\uDFD6" }} Home set to {{ trigger.to_state.state }} mode
+            {% else %} {{ "\uD83C\uDFE1" }} Home set to {{ trigger.to_state.state }} mode
+            {% endif %}
+          message: >
+            {% if is_state("input_select.home_status", "Holiday") %} Enjoy your trip!
+            {% else %} Home Assistant status updated
+            {% endif %}
+          data:
+            push:
+              thread-id: "home-monitoring"
+            apns_headers:
+              apns-collapse-id: "home-status"
+
+  - alias: "Home Status - Temporarily Occupied"
+    id: "home_status_override"
+    description: "If presence is detected when the home is unoccupied, send an alert and trigger override mode"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.house_occupancy
+        to: "on"
+    conditions:
+      not:
+        - condition: state
+          entity_id: input_select.home_status
+          state: "Home"
+    action:
+      - action: input_boolean.turn_on
+        entity_id: input_boolean.home_occupancy_override
+      - action: script.notify_engine
+        data:
+          TITLE: "Someone has been detected in the house"
+          MESSAGE: "Don't panic! This may be a friendly face. Here's the latest image from the front door camera."
+          DEBUG: true # FIXME THESE NED TO BE POPTIONAL. THE SCRIPT FAILS AT THE MOENT IF OFF
+          LOCATION: "any" # FIXME THESE NED TO BE POPTIONAL. THE SCRIPT FAILS AT THE MOENT IF OFF
+          IMAGE_URL: "{{ state_attr('camera.aarlo_front_door', 'last_thumbnail') }}"
+          # URL: "{{ state_attr('camera.aarlo_front_door', 'last_video') }}"
+
+  - alias: "Home Status - Turn Off Temporary Override"
+    id: "home_status_turn_off_override"
+    description: "If presence is no longer detected when the home is unoccupied, turn off override mode"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.house_occupancy
+        to: "off"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.home_occupancy_override
+        state: "on"
+    action:
+      - action: input_boolean.turn_off
+        entity_id: input_boolean.home_occupancy_override
+      # TURN OFF ALL HARDWARE
+      - action: script.turn_on
+        entity_id: script.turn_off_all_hardware

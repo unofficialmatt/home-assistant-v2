@@ -1,0 +1,20 @@
+mushroom_switch:
+  default:
+    - title: "{{ state_attr(entity, 'friendly_name') | title}}"
+  card:
+    type: custom:mushroom-entity-card
+    entity: "[[entity_id]]"
+    name: "[[title]]"
+    icon_color: |+
+      {% set state = (states(entity) %}}
+      {% if state == 'on' %}
+        "accent"
+      {% else %}
+        "disabled"
+      {% endif %}
+    tap_action:
+      action: toggle
+    hold_action:
+      action: more-info
+    double_tap_action:
+      action: none

@@ -1,46 +1,160 @@
 # lovelace_gen
-{% set lights = [ 'hallway_door', 'hallway_stairs', 'landing' ] %}
+{% set hall_lights = {'Front Door': 'hallway_door','Stairs': 'hallway_stairs' } %}
+{% set hall_batteries = {'Motion Door': 'hallway_motion_sensor_battery', 'Motion Kitchen': 'hallway_motion_sensor_2_battery' } %}
 
+{% set landing_lights = {'Ceiling': 'landing' } %}
+{% set landing_batteries = {'Motion Stairs': 'landing_motion_sensor_battery', 'Motion Landing': 'landing_motion_sensor_2_battery' } %}
+
+# TODO: Add occupancy / motin chups
 - title: Hallways
   path: hallways
+  type: custom:grid-layout
   icon: mdi:stairs
-
+  layout:
+    grid-template-columns: 1fr 1fr 1fr
+    grid-template-rows: auto
+    grid-gap: 12px
+    margin: 20px
+    grid-template-areas: |
+      "header header chips"
+      "col1 col2 col3"
+    mediaquery:
+      "(max-width: 500px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "chips chips"
+          "header header"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 900px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 1200px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col2"
+          "col3 col2"
+          "col3 ."
   cards:
 
-    - type: horizontal-stack
-      cards:
-        - !include ../chips/chip_back.yaml
-        - type: custom:button-card
-          template: chip_vacuum_room
-          variables:
-            ulm_card_segments: '["17"]'
-        #- !include ../chips/presence.yaml
-        #- !include ../chips/wifi.yaml
-        # - !include ../chips/spotify.yaml
-        # - !include ../chips/temperature.yaml
-        # - !include ../chips/chance_of_rain.yaml
+    # GRID AREA HEADER
+    - type: custom:decluttering-card
+      template: mushroom_view_header
+      view_layout:
+        grid-area: header
+      variables:
+        - room: Hallways
 
+    # GRID AREA CHIPS
+    - type: custom:decluttering-card
+      template: mushroom_chips
+      view_layout:
+        grid-area: chips
+      # variables:
+      #   - occupancy_sensor: binary_sensor.toilet_occupancy
+
+    # GRID AREA COL1
     - type: vertical-stack
+      view_layout:
+        grid-area: col1
       cards:
 
-        - type: custom:button-card
-          template: card_title
-          name: "Hallways"
-          label: "Lights"
+        - type: heading
+          heading: Hallway
+          icon: mdi:door-open
+          badges:
+            # TODO: Motion Badge?
+            - type: entity
+              entity: light.hallway
+              tap_action:
+                action: toggle
+              show_state: true
+              color: state
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+            {% for key, val in hall_lights.items() %}
+            - type: custom:mushroom-light-card
+              entity: light.{{ val }}
+              name: "{{ key }}"
+              use_light_color: true
+              show_brightness_control: true
+              # show_color_temp_control: true
+              # show_color_control: true
+              collapsible_controls: true
+            {% endfor %}
+
+        - type: heading
+          heading: Batteries
+          heading_style: subtitle
 
         - type: grid
           columns: 2
           square: false
           cards:
 
-          {% for x in lights %}
-          - type: custom:button-card
-            template: card_light
-            entity: light.{{ x }}
-            variables:
-              ulm_card_light_enable_slider: true
-              ulm_card_light_enable_color: true
-              #ulm_card_light_force_background_color: true
-              ulm_card_light_enable_collapse: true
-              ulm_card_light_enable_popup: true
-          {% endfor %}
+            {% for key, val in hall_batteries.items() %}
+            - type: custom:decluttering-card
+              template: mushroom_battery
+              variables:
+                - entity_id: sensor.{{ val }}
+                - title: "{{ key }}"
+            {% endfor %}
+
+    # GRID AREA COL2
+    - type: vertical-stack
+      view_layout:
+        grid-area: col2
+      cards:
+
+        - type: heading
+          heading: Landing
+          icon: mdi:door-closed
+          badges:
+            # TODO: Motion Badge?
+            - type: entity
+              entity: light.landing
+              tap_action:
+                action: toggle
+              show_state: true
+              color: state
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+            {% for key, val in landing_lights.items() %}
+            - type: custom:mushroom-light-card
+              entity: light.{{ val }}
+              name: "{{ key }}"
+              use_light_color: true
+              show_brightness_control: true
+              # show_color_temp_control: true
+              # show_color_control: true
+              collapsible_controls: true
+            {% endfor %}
+
+        - type: heading
+          heading: Batteries
+          heading_style: subtitle
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            {% for key, val in landing_batteries.items() %}
+            - type: custom:decluttering-card
+              template: mushroom_battery
+              variables:
+                - entity_id: sensor.{{ val }}
+                - title: "{{ key }}"
+            {% endfor %}

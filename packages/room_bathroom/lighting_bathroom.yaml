@@ -1,0 +1,132 @@
+automation:
+  - alias: Family Bathroom - turn on lights
+    id: "bathroom_lights_on_motion"
+    description: "Turns on Family Bathroom Lights when motion is detected"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.bathroom_occupancy
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: light.bathroom
+        state: "off"
+    action:
+      - action: light.turn_on
+        entity_id: light.bathroom
+
+  - alias: Family Bathroom - turn off lights
+    id: "bathroom_lights_off"
+    description: "Turns off Family Bathroom Lights when occupancy is no longer detected"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.bathroom_occupancy
+        to: "off"
+        # for:
+        #   seconds: 30
+    condition:
+      # 1. The lights are on
+      - condition: state
+        entity_id: light.bathroom
+        state: "on"
+    action:
+      - action: light.turn_off
+        entity_id: light.bathroom
+        data:
+          transition: 5
+      # The dimmer can set this to off, so here we need to turn it back on
+      - action: switch.turn_on
+        entity_id: switch.adaptive_lighting_bathroom
+
+  - alias: Dim Bathroom Lights
+    id: "bathroom_lights_dim"
+    description: "Dims the bathroom lights by 15% when the dimmer is rotated to the left"
+    trigger:
+      - platform: event
+        event_type: zha_event
+        event_data:
+          device_id: "0d836e304e97acc631ad580d6ac47de7"
+          command: "left"
+    # Only dim the lights if they are on
+    condition:
+      - condition: state
+        entity_id: light.bathroom
+        state: "on"
+    action:
+      - action: light.turn_on
+        entity_id: light.bathroom
+        data:
+          brightness_step_pct: -15
+
+  - alias: Brighten Bathroom Lights
+    id: "bathroom_lights_brighten"
+    description: "Brightens the bathroom lights by 15% when the dimmer is rotated to the right"
+    trigger:
+      - platform: event
+        event_type: zha_event
+        event_data:
+          device_id: "0d836e304e97acc631ad580d6ac47de7"
+          command: "right"
+    action:
+      - action: light.turn_on
+        entity_id: light.bathroom
+        data:
+          brightness_step_pct: 15
+
+  - alias: Turn On Bathroom Lights
+    id: "bathroom_lights_on_double_tap"
+    description: "Dim the bathroom lights to 100% when the dimmer is double tapped"
+    trigger:
+      - platform: event
+        event_type: zha_event
+        event_data:
+          device_id: "0d836e304e97acc631ad580d6ac47de7"
+          command: "on"
+    action:
+      - action: light.turn_on
+        entity_id: light.bathroom
+        data:
+          brightness_pct: 100
+      - action: switch.turn_off
+        entity_id: switch.adaptive_lighting_bathroom
+
+  - alias: Turn Off Bathroom Lights
+    id: "bathroom_lights_dim_to_5"
+    description: "Dim the bathroom lights to 5% when the dimmer is triple tapped"
+    trigger:
+      - platform: event
+        event_type: zha_event
+        event_data:
+          device_id: "0d836e304e97acc631ad580d6ac47de7"
+          command: "off"
+    action:
+      - action: light.turn_on
+        entity_id: light.bathroom
+        data:
+          brightness_pct: 5
+
+  - alias: Toggle Bathroom Lights
+    id: "bathroom_lights_toggle"
+    description: "Toggle the bathroom lights on/off depending on their current state when the dimmer is tapped"
+    trigger:
+      - platform: event
+        event_type: zha_event
+        event_data:
+          device_id: "0d836e304e97acc631ad580d6ac47de7"
+          command: toggle
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: light.bathroom
+                state: "on"
+            sequence:
+              - action: light.turn_off
+                entity_id: light.bathroom
+          - conditions:
+              - condition: state
+                entity_id: light.bathroom
+                state: "off"
+            sequence:
+              - action: light.turn_on
+                entity_id: light.bathroom
+# TODO: Use the motion sensor + humidity to turn off if nothing detected for 10 mins

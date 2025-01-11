@@ -1,0 +1,67 @@
+automation:
+  - alias: Guest Bedroom - Sleep Mode - Wind Down
+    id: "1702244010"
+    description: "Initialise Wind Down mode when motion is detected in the guest bedroom between 20:30 and 03:00"
+    trigger:
+      # When either mmWave or PIR sensor are triggered (can't use binary_sensor.guest_bedroom_occupancy as it might already be on)
+      - platform: state
+        entity_id: binary_sensor.guest_bedroom_mmwave_sensor
+        to: "on"
+      - platform: state
+        entity_id: binary_sensor.guest_bedroom_pir_sensor
+        to: "on"
+    condition:
+      condition: and
+      conditions:
+        # 1. Sleep mode is currently set to Off
+        - condition: template
+          value_template: "{{ float(states('input_number.guest_bedroom_bedtime_status')) == 0.0 }}"
+        # 2. It is between 20:30 and 03:00
+        - condition: time
+          after: "20:30:00"
+          before: "03:00:00"
+        # 3. There are guests staying in this room
+        - condition: state
+          entity_id: input_boolean.guests_staying_bedroom_2
+          state: "on"
+    action:
+      - action: input_number.increment
+        data:
+          entity_id: input_number.guest_bedroom_bedtime_status
+
+  - alias: Guest Bedroom - Sleep Mode - Asleep
+    id: "1702244011"
+    description: "Initialise Asleep mode when the lights are turned off in the Guest Bedroom, when 'Wind Down' mode is active"
+    trigger:
+      - platform: state
+        entity_id: light.guest_bedroom
+        to: "off"
+    condition:
+      # 1. Sleep mode is currently set to Wind Down
+      - condition: template
+        value_template: "{{ float(states('input_number.guest_bedroom_bedtime_status')) == 1.0 }}"
+    action:
+      - action: input_number.increment
+        data:
+          entity_id: input_number.guest_bedroom_bedtime_status
+
+  - alias: Guest Bedroom - Sleep Mode - Reset
+    id: "1702244012"
+    description: "Resets sleep mode when occupancy is not detected for 15 minutes in the Guest Bedroom"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.guest_bedroom_occupancy
+        to: "off"
+        for:
+          minutes: 15
+    condition:
+      # 1. Sleep mode is currently set to Wind Down or Asleep
+      - condition: template
+        value_template: "{{ float(states('input_number.guest_bedroom_bedtime_status')) > 0.0 }}"
+    action:
+      - action: input_number.set_value
+        data:
+          entity_id: input_number.guest_bedroom_bedtime_status
+          value: 0.0
+      # - action: switch.turn_off
+      #   entity_id: switch.adaptive_lighting_sleep_mode_guest_bedroom

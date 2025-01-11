@@ -1,0 +1,40 @@
+homeassistant:
+  customize_glob:
+    "*version*":
+      icon: mdi:package-up
+
+lovelace_gen:
+
+automation:
+  - alias: Theme Switch
+    id: "hass_theme_switch"
+    description: Switches the Home Assistant theme based on whether the sun is above the horizon
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id: sun.sun
+        to: above_horizon
+      - platform: state
+        entity_id: sun.sun
+        to: below_horizon
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sun.sun
+                state: "above_horizon"
+            sequence:
+              - action: frontend.set_theme
+                data:
+                  name: minimalist-desktop
+                  mode: light
+          - conditions:
+              - condition: state
+                entity_id: sun.sun
+                state: "below_horizon"
+            sequence:
+              - action: frontend.set_theme
+                data:
+                  name: minimalist-desktop
+                  mode: dark

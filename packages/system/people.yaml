@@ -1,0 +1,82 @@
+# TODO : add all friends and family
+homeassistant:
+  customize:
+    person.matt:
+      notifier: notify.mobile_app_matts_iphone
+      entity_picture: "/local/people/matt.png"
+    person.sarah:
+      notifier: notify.mobile_app_sarahs_iphone_2 # todo: get this back to not _2
+      entity_picture: "/local/people/sarah.png"
+    device_tracker.lucy:
+      entity_picture: /local/lovelace/memojis/lucy.png
+    device_tracker.rob:
+      entity_picture: /local/lovelace/memojis/rob.png
+
+person:
+  - name: Matt
+    id: matt
+    user_id: 96aa57047c3140719ded88983083d576
+    device_trackers:
+      - device_tracker.matts_iphone_app
+      # - device_tracker.matts_iphone_ip # Google WiFi Ping #FIXME
+
+  - name: Sarah
+    id: sarah
+    user_id: a17a1b5a5d5c4bc0abe1b69c7f824259
+    device_trackers:
+      - device_tracker.sarahs_iphone_app
+      # - device_tracker.sarahs_iphone_ip # Google WiFi Ping #FIXME
+
+group:
+  occupants:
+    name: Occupants
+    entities:
+      - person.matt
+      - person.sarah
+  family:
+    name: Family
+    entities:
+      # - device_tracker.aimee
+      # - device_tracker.james
+      # - device_tracker.beez
+      - device_tracker.lucy
+      # - device_tracker.mum
+  friends:
+    name: Friends
+    entities:
+      - device_tracker.katt
+      - device_tracker.rob
+  guests:
+    name: Guests
+    entities:
+      - group.friends
+      #- group.family
+
+template:
+  sensor:
+    - name: Matt Friendly Location
+      state: >
+        {% if states.person.matt.state == 'home' %}
+        Home
+        {% elif (states.sensor.proximity_matt_from_home.state|float >= 110000) and (states.sensor.proximity_matt_from_home.state|float <= 320000) %}
+        Lost
+        {% elif states.sensor.proximity_matt_from_home.state|float > 320000 %}
+        Far Away
+        {% elif states.person.matt.state == 'Matt Work' %}
+        Work
+        {% else %}
+        nr. {{states.sensor.matts_iphone_geocoded_location.attributes.Thoroughfare}}
+        {% endif %}
+    - name: Sarah Friendly Location
+      state: >
+        {% if states.person.sarah.state == 'home' %}
+        Home
+        {% elif (states.sensor.proximity_sarah_from_home.state|float >= 110000) and (states.sensor.proximity_sarah_from_home.state|float <= 320000) %}
+        Lost
+        {% elif states.sensor.proximity_sarah_from_home.state|float > 320000 %}
+        Far Away
+        {% elif states.person.sarah.state == 'Sarah Work' %}
+        Work
+        {% else %}
+        nr. {{states.sensor.sarahs_iphone_geocoded_location.attributes.Thoroughfare}}
+        {% endif %}

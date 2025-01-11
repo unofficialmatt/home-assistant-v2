@@ -1,0 +1,54 @@
+sensor:
+  - platform: template
+    sensors:
+      downstairs_toilet_temperature:
+        friendly_name: "Downstairs Toilet Temperature"
+        value_template: "{{ state_attr('climate.downstairs_toilet', 'current_temperature') }}"
+        unit_of_measurement: "°C"
+      downstairs_toilet_target_temperature:
+        friendly_name: "Downstairs Toilet Target Temperature"
+        value_template: "{{ state_attr('climate.downstairs_toilet', 'temperature') }}"
+        unit_of_measurement: "°C"
+
+automation:
+  - alias: Downstairs Toilet - adjust radiator temperature
+    id: "downstairs_toilet_radiator_adjust"
+    description: "Adjust Toilet Radiator temperature when home becomes occupied or the target temperature changes"
+    trigger:
+      # 1. Trigger when the home status changes to 'Home'
+      - platform: state
+        entity_id: input_select.home_status
+        to: "Home"
+      # 2. Trigger when the room target temperature changes
+      - platform: state
+        entity_id: sensor.toilet_target_temperature
+    condition:
+      condition: and
+      conditions:
+        # 1. The house is occupied
+        - condition: state
+          entity_id: input_select.home_status
+          state: "Home"
+        # 2. The target temperature of the radiator does not already match the target temperature we want (prevents this automation running every 5 mins)
+        - condition: template
+          value_template: "{{ state_attr('climate.downstairs_toilet', 'temperature') | float != states('sensor.toilet_target_temperature') | float }}"
+    action:
+      - action: climate.set_temperature
+        data_template:
+          temperature: "{{ states('sensor.toilet_target_temperature') | int }}"
+        target:
+          entity_id: climate.downstairs_toilet
+
+  - alias: Downstairs Toilet - radiator idle
+    id: "downstairs_toilet_radiator_idle"
+    description: "Sets the downstairs toilet radiator to idle when the house is unoccupied"
+    trigger:
+      - platform: state
+        entity_id: input_select.home_status
+        to: "Away"
+    action:
+      - action: climate.set_temperature
+        data_template:
+          temperature: "{{ states('sensor.unoccupied_target_temperature') | int }}"
+        target:
+          entity_id: climate.master_bedroom

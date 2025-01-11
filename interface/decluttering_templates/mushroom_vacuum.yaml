@@ -1,0 +1,471 @@
+# https://smarthomepursuits.com/updated-mushroom-vacuum-card-for-home-assistant/?utm_content=cmp-true
+# https://www.reddit.com/r/homeassistant/comments/11g5vw5/and_heres_my_improved_compact_vacuum_card/
+# TODO: BE NICE IF WHEN YOU ADD A ROOM IT CONCATENATES TO The list of rooms to vacuum
+mushroom_vacuum:
+  card:
+    type: custom:vertical-stack-in-card
+    card_mod:
+      style: |
+        ha-card {
+          box-shadow: none;
+        }
+    cards:
+      - type: custom:vacuum-card
+        entity: vacuum.valetudo_roborock
+        image: default
+        show_toolbar: false
+
+      - type: grid
+        square: false
+        columns: 5
+        cards:
+          - type: conditional
+            conditions:
+              - entity: vacuum.valetudo_roborock
+                state: "cleaning"
+            card:
+              type: custom:mushroom-template-card
+              icon: mdi:pause
+              icon_color: green
+              badge_icon: mdi:robot-vacuum
+              badge_color: green
+              tap_action:
+                action: perform-action
+                perform_action: vacuum.pause
+                target:
+                  entity_id: vacuum.valetudo_roborock
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    box-shadow: none;
+                    margin-bottom: 6px !important;
+                  }
+          - type: conditional
+            conditions:
+              - entity: vacuum.valetudo_roborock
+                state_not: "cleaning"
+            card:
+              type: custom:mushroom-template-card
+              icon: mdi:play
+              icon_color: green
+              tap_action:
+                action: perform-action
+                perform_action: vacuum.start
+                target:
+                  entity_id: vacuum.valetudo_roborock
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    box-shadow: none;
+                    margin-bottom: 6px !important;
+                  }
+
+          - type: custom:mushroom-template-card
+            icon: mdi:stop
+            icon_color: red
+            tap_action:
+              action: perform-action
+              perform_action: vacuum.stop
+              target:
+                entity_id: vacuum.valetudo_roborock
+            hold_action:
+              action: none
+            card_mod:
+              style: |
+                ha-card {
+                  box-shadow: none;
+                  margin-bottom: 6px !important;
+                }
+
+          # TODO: CREATE THIS SCRIPT
+          - type: custom:mushroom-template-card
+            badge_icon: >-
+              {{ 'mdi:reload' if is_state('vacuum.valetudo_roborock',
+              'returning') }}
+            badge_color: >-
+              {{ 'red' if
+              is_state('vacuum.valetudo_roborock','returning') }}
+            icon: mdi:home
+            icon_color: light-blue
+            tap_action:
+              action: perform-action
+              perform_action: vacuum.return_to_base
+              target:
+                entity_id: vacuum.valetudo_roborock
+            hold_action:
+              action: none
+            card_mod:
+              style: |
+                ha-card {
+                  box-shadow: none;
+                  margin-bottom: 6px !important;
+                }
+
+          - type: custom:mushroom-template-card
+            entity: input_boolean.ui_vac_controls
+            icon: mdi:home-map-marker
+            icon_color: orange
+            badge_icon: >-
+              {{ 'mdi:arrow-up-bold' if
+              is_state('input_boolean.ui_vac_controls', 'on') else
+              'mdi:arrow-down-bold' }}
+            badge_color: >-
+              {{ 'red' if is_state('input_boolean.ui_vac_controls',
+              'on') else 'green' }}
+            tap_action:
+              action: toggle
+            hold_action:
+              action: none
+            card_mod:
+              style: |
+                ha-card {
+                  box-shadow: none;
+                  margin-bottom: 6px !important;
+                }
+
+          - type: custom:mushroom-template-card
+            entity: input_boolean.ui_vac_info
+            icon: mdi:information
+            icon_color: lime
+            badge_icon: >-
+              {{ 'mdi:arrow-up-bold' if
+              is_state('input_boolean.ui_vac_info', 'on') else
+              'mdi:arrow-down-bold' }}
+            badge_color: |-
+              {{ 'red' if is_state('input_boolean.ui_vac_info', 'on') else
+              'green' }}
+            tap_action:
+              action: toggle
+            hold_action:
+              action: none
+            card_mod:
+              style: |
+                ha-card {
+                  box-shadow: none;
+                  margin-bottom: 6px !important;
+                }
+
+      # TODO: GET THIS ONE TO WORK
+      # - type: conditional
+      #   conditions:
+      #     - entity: vacuum.valetudo_roborock
+      #       state: cleaning
+      #     - entity: vacuum.valetudo_roborock
+      #       state_not: idle
+      #   card:
+      #     type: custom:mushroom-template-card
+      #     primary: "Currently vacuuming:"
+      #     secondary: "{{ states('input_select.vacuum_rooms') }}"
+      #     icon: mdi:timer-sand
+      #     badge_icon: ""
+      #     icon_color: blue
+
+      - type: conditional
+        conditions:
+          - entity: input_boolean.ui_vac_controls
+            state: "on"
+        card:
+          type: heading
+          heading: Hoover a Room
+          card_mod:
+            style:
+              .: |
+                ha-card {
+                  margin: 4px 12px;
+                }
+                .title {
+                  width: 100%;
+                }
+                .title > p {
+                  text-align: center;
+                  width: 100%;
+                  font-weight: 500;
+                }
+
+      - type: conditional
+        conditions:
+          - entity: input_boolean.ui_vac_controls
+            state: "on"
+        card:
+          type: grid
+          square: false
+          columns: 2
+          cards:
+            - type: custom:mushroom-template-card
+              icon: mdi:sofa
+              icon_color: orange
+              primary: Lounge + Diner
+              tap_action:
+                action: script.vacuum_clean_segments_message
+                service_data:
+                  segments: [] # TODO: Add in the segments for this room
+                  iterations: "1"
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    box-shadow: none;
+                    padding: 0 12px;
+                  }
+            - type: custom:mushroom-template-card
+              icon: mdi:fridge
+              icon_color: purple
+              primary: Kitchen
+              tap_action:
+                action: script.vacuum_clean_segments_message
+                service_data:
+                  segments: [] # TODO: Add in the segments for this room
+                  iterations: "1"
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    box-shadow: none;
+                    padding: 0 12px;
+                  }
+            - type: custom:mushroom-template-card
+              icon: mdi:dice-5
+              icon_color: green
+              primary: Nook
+              tap_action:
+                action: script.vacuum_clean_segments_message
+                service_data:
+                  segments: [] # TODO: Add in the segments for this room
+                  iterations: "1"
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    box-shadow: none;
+                    padding: 0 12px;
+                  }
+            - type: custom:mushroom-template-card
+              icon: mdi:stairs
+              icon_color: blue
+              primary: Hallway
+              tap_action:
+                action: script.vacuum_clean_segments_message
+                service_data:
+                  segments: [] # TODO: Add in the segments for this room
+                  iterations: "1"
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    box-shadow: none;
+                    padding: 0 12px;
+                  }
+
+      - type: conditional
+        conditions:
+          - entity: input_boolean.ui_vac_info
+            state: "on"
+        card:
+          type: heading
+          heading: Robbie's World
+          card_mod:
+            style:
+              .: |
+                ha-card {
+                  margin: 4px 12px;
+                }
+                .title {
+                  width: 100%;
+                }
+                .title > p {
+                  text-align: center;
+                  width: 100%;
+                  font-weight: 500;
+                }
+
+      - type: conditional
+        conditions:
+          - entity: input_boolean.ui_vac_info
+            state: "on"
+        card:
+          type: custom:decluttering-card
+          template: mushroom_datetime
+          variables:
+            - entity: robbie_schedule
+
+      - type: conditional
+        conditions:
+          - entity: input_boolean.ui_vac_info
+            state: "on"
+        # TODO: Add in the map from https://smarthomepursuits.com/updated-mushroom-vacuum-card-for-home-assistant/
+        card:
+          type: custom:valetudo-map-card
+          vacuum: valetudo_roborock
+          title: ""
+          show_battery_level: false
+          show_status: false
+          show_start_button: false
+          show_pause_button: false
+          show_stop_button: false
+          show_home_button: false
+          show_locate_button: false
+          # crop: "{top: 0, bottom: 20, left: 0, right: 0}"
+      - type: conditional
+        conditions:
+          - entity: input_boolean.ui_vac_info
+            state: "on"
+          - entity: sensor.valetudo_roborock_error
+            state_not: "No error"
+        card:
+          type: custom:mushroom-entity-card
+          entity: sensor.valetudo_roborock_error
+          icon: mdi:alert
+          name: Errors
+          icon_color: red
+          tap_action:
+            action: none
+          card_mod:
+            style: |
+              ha-card {
+                padding: 0 12px;
+              }
+
+      - type: conditional
+        conditions:
+          - entity: input_boolean.ui_vac_info
+            state: "on"
+        card:
+          type: custom:mushroom-template-card
+          primary: Battery Level
+          secondary: "{{ state_attr('vacuum.valetudo_roborock','battery_level') }}%"
+          icon: mdi:battery-30
+          icon_color: lime
+          card_mod:
+            style: |
+              ha-card {
+                padding: 0 12px;
+              }
+      - type: conditional
+        conditions:
+          - entity: input_boolean.ui_vac_info
+            state: "on"
+        card:
+          type: custom:mushroom-template-card
+          entity: sensor.valetudo_roborock_current_statistics_time
+          primary: Last Cleaning Stats
+          secondary: "{{ ((states('sensor.valetudo_roborock_current_statistics_time') | float) / 60) | round }} mins / {{ ((states('sensor.valetudo_roborock_current_statistics_area') | int ) / 10000) | round(1) }} m²"
+          icon: mdi:clock-alert
+          icon_color: lime
+          tap_action:
+            action: none
+          card_mod:
+            style: |
+              ha-card {
+                padding: 0 12px;
+              }
+      - type: conditional
+        conditions:
+          - entity: input_boolean.ui_vac_info
+            state: "on"
+        card:
+          type: custom:mushroom-template-card
+          entity: sensor.valetudo_roborock_main_brush
+          primary: Brush Life
+          secondary: "{{ ((states('sensor.valetudo_roborock_main_brush') | int) / 60) | round }} hrs"
+          icon: mdi:broom
+          icon_color: lime
+          tap_action:
+            action: none
+          card_mod:
+            style: |
+              ha-card {
+                padding: 0 12px;
+              }
+      - type: conditional
+        conditions:
+          - entity: input_boolean.ui_vac_info
+            state: "on"
+        card:
+          type: custom:mushroom-template-card
+          entity: sensor.valetudo_roborock_main_filter
+          primary: Filter Life
+          secondary: "{{ ((states('sensor.valetudo_roborock_main_filter') | int) / 60 ) | round }} hrs"
+          icon: mdi:air-filter
+          icon_color: lime
+          tap_action:
+            action: none
+          card_mod:
+            style: |
+              ha-card {
+                padding: 0 12px;
+              }
+      - type: conditional
+        conditions:
+          - entity: input_boolean.ui_vac_info
+            state: "on"
+        card:
+          type: custom:mushroom-template-card
+          entity: sensor.valetudo_roborock_right_brush
+          primary: Right Brush Life
+          secondary: "{{ ((states('sensor.valetudo_roborock_right_brush') | int) / 60 ) | round }} hrs"
+          icon: mdi:brush
+          icon_color: lime
+          tap_action:
+            action: none
+          card_mod:
+            style: |
+              ha-card {
+                padding: 0 12px;
+              }
+      - type: conditional
+        conditions:
+          - entity: input_boolean.ui_vac_info
+            state: "on"
+        card:
+          type: custom:mushroom-template-card
+          entity: sensor.valetudo_roborock_sensor_cleaning
+          primary: Sensor Cleaning
+          secondary: "{{ ((states('sensor.valetudo_roborock_sensor_cleaning') | int) / 60) | round }} hrs"
+          icon: mdi:signal-variant
+          icon_color: lime
+          tap_action:
+            action: none
+          card_mod:
+            style: |
+              ha-card {
+                padding: 0 12px 8px 12px;
+              }
+
+      # - type: custom:auto-entities
+      #   card:
+      #     type: entities
+      #     state_color: true
+      #     title: Rooms to Vacuum
+      #   filter:
+      #     include:
+      #       - group: group.vacuum_rooms
+      #     exclude: []
+      #   show_empty: true
+      #   sort:
+      #     method: friendly_name
+      #     reverse: false
+      #     numeric: false
+      # - type: custom:button-card
+      #   tap_action:
+      #     action: call-service
+      #     action: script.vacuum_clean_segments
+      #     # confirmation: true
+      #     service_data: {}
+      #     target: {}
+      #   lock:
+      #     enabled: >-
+      #       [[[return states['group.vacuum_rooms'].state !== 'on' ||
+      #       states['vacuum.valetudo_roborock'].state !== 'docked']]]
+      #     exemptions: []
+      #   entity: script.vacuum_clean_segments
+      #   name: Vacuum selected segments
+      #   show_state: false
+      #   show_icon: false

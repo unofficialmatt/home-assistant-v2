@@ -1,0 +1,131 @@
+# TODO: TURN VOLUME BACK DOWN AFTER EMERGENCY ALERT AND NORMAL TTS
+tts:
+  - platform: amazon_polly
+    aws_access_key_id: !secret aws_access_key_id
+    aws_secret_access_key: !secret aws_secret_access_key
+    voice: Matthew
+    text_type: ssml
+    cache: True
+
+input_boolean:
+  tts_notifications:
+    name: TTS Notifications
+    initial: on
+    icon: mdi:text-to-speech
+  emergency_alert_active:
+    name: Emergency Alert
+    initial: off
+    icon: mdi:alert
+
+script:
+  openai_text_generate:
+    alias: OpenAI Text Generation
+    sequence:
+      - action: conversation.process
+        data:
+          text: !include ../../inc/speech_gen_openai.yaml
+          agent_id: conversation.chatgpt
+        response_variable: tts_message
+
+  # EMERGENCY LOOP SENDS A TTS MESSAGE EVERY MINUTE UNTIL THE EMERGENCY ALERT IS TURNED OFF
+  emergency_tts_loop:
+    alias: Emergency TTS Loop
+    sequence:
+      - alias: "Loop TTS Message Until Emergency Alert is Off"
+        repeat:
+          while:
+            - condition: state
+              entity_id: input_boolean.emergency_alert_active
+              state: "on"
+          sequence:
+            - service: script.tts_process
+              data:
+                # media_player: media_player.whole_home
+                media_player: media_player.master_bedroom_wifi
+                speech_message: "{{ tts_message }}"
+                volume_level: 1
+            - delay: "00:00:30" # Loop every 30 seconds
+
+  # TTS ENGINE WITH AI GENERATED TEXT
+  tts_engine:
+    # The TTS Engine takes the following optional variables and passes them to tts_process which does the heavy lifting
+    # TTS Engine checks that all necessary conditions have been fulfilled, and whether a media player has been defined
+    # - media_player: the media player to pass TTS through
+    # - call_outside_weather: announce the outside weather
+    # - tts_message : the message to speak
+    # TODO: Add in whether or not to use AI.
+
+    alias: TTS Engine
+    sequence:
+      ## ONLY RUN THE ENGINE IF BETWEEN 0530-2400, SOMEONE IS HOME,
+      ## TTS NOTIFICATIONS ARE ON AND WE ARE NOT ASLEEP
+      # TODO: ALLOW IT TO RUN IF WE ARE ASLEEP WITH A CRITICAL ALERT. ALSO CONSIDER WHACKING BEDROOM LIGHTS ON. THIS IS BASICALLY A CRITICAL ALERT FOR SOMETHING LIKE A WATER LEAK
+      - condition: and
+        conditions:
+          - condition: time
+            after: "05:30"
+            before: "23:59"
+          - condition: state
+            entity_id: input_select.home_status
+            state: "Home"
+          - condition: state
+            entity_id: input_boolean.tts_notifications
+            state: "on"
+          # TODO:
+          #- condition: or
+          #  conditions:
+          #    - condition: state
+          #      entity_id: input_select.master_bedroom_sleep_mode
+          #      state: Lights On
+          #    - condition: state
+          #      entity_id: input_select.master_bedroom_sleep_mode
+          #      state: "Off"
+      ## TODO EVENTUALLY DO THIS SO THAT GOOGLE SPEAKERS CONTINUE PLAYING...
+      - action: conversation.process
+        data:
+          text: !include ../../inc/speech_gen_openai.yaml
+          agent_id: conversation.chatgpt
+        response_variable: tts_message
+
+      - action: script.tts_process
+        data:
+          ## IF NO DATA IS PASSED, DEFAULT TO ALL
+          ## IF SEQUENCE, SPLIT AND CONCAT WITH ,
+          ## ELSE TAKE VALUE PASSED
+          media_player: >-
+            {% if media_player | length == 0 %}
+              {% set media_player = 'media_player.whole_home' %}
+            {% endif %}
+            {% if media_player is not string and media_player is sequence %}
+              {% set media_player = media_player|join(', ') %}
+            {% endif %}
+            {{ media_player }}
+          speech_message: "{{ tts_message.response.speech.plain.speech }}"
+
+  tts_process:
+    alias: TTS Process
+    sequence:
+      - action: media_player.volume_set
+        data:
+          entity_id: >
+            {{ media_player }}
+          volume_level: >-
+            {% if volume_level is defined %}
+              {{ volume_level }}
+            {% elif now().strftime('%H')|int <= 10 and now().strftime('%H')|int >= 6 %}
+              0.5
+            {% elif now().strftime('%H')|int > 10 and now().strftime('%H')|int <= 24 %}
+              0.4
+            {% else %}
+              0.3
+            {% endif %}
+      - action: tts.amazon_polly_say
+        data:
+          entity_id: >
+            {{ media_player }}
+          message: >-
+            <speak>
+              <amazon:auto-breaths volume="x-loud" frequency="x-high">
+              {{ speech_message }}
+              </amazon:auto-breaths>
+            </speak>

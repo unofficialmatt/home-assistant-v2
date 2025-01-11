@@ -1,0 +1,56 @@
+mushroom_graph_triple:
+  default:
+    - color_one: blue
+    - color_two: green
+    - color_three: yellow
+    - entity_one_name: "Entity One"
+    - entity_two_name: "Entity Two"
+    - entity_three_name: "Entity Three"
+  card:
+    type: custom:vertical-stack-in-card
+    cards:
+      - type: grid
+        square: false
+        columns: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: "[[entity_one]]"
+            primary_info: state
+            secondary_info: name
+            name: "[[entity_one_name]]"
+            icon_color: "[[color_one]]"
+          - type: custom:mushroom-entity-card
+            entity: "[[entity_two]]"
+            primary_info: state
+            secondary_info: name
+            name: "[[entity_two_name]]"
+            icon_color: "[[color_two]]"
+          - type: custom:mushroom-entity-card
+            entity: "[[entity_three]]"
+            primary_info: state
+            secondary_info: name
+            name: "[[entity_three_name]]"
+            icon_color: "[[color_three]]"
+      - type: custom:mini-graph-card
+        entities:
+          - entity: "[[entity_one]]"
+            name: "[[entity_one_name]]"
+            color: var(--[[color_one]]-color)
+          - entity: "[[entity_two]]"
+            name: "[[entity_two_name]]"
+            color: var(--[[color_two]]-color)
+            y_axis: secondary
+          - entity: "[[entity_three]]"
+            name: "[[entity_three_name]]"
+            color: var(--[[color_three]]-color)
+            y_axis: secondary
+        hours_to_show: 24
+        line_width: 3
+        font_size: 50
+        animate: true
+        show:
+          name: false
+          icon: false
+          state: false
+          legend: false
+          fill: fade

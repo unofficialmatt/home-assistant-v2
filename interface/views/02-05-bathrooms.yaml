@@ -1,66 +1,245 @@
 # lovelace_gen
-{% set batteries = ['bathroom_radiator_battery_level','en_suite_radiator_battery_level'] %}
+{% set toilet_batteries = {'Door Sensor': 'downstairs_toilet_door_battery','Motion Sensor': 'toilet_motion_sensor_battery','Radiator': 'downstairs_toilet_radiator_battery_level' } %}
+{% set bathroom_batteries = {'Dimmer': 'bathroom_dimmer_battery', 'Humidity Sensor': 'bathroom_humidity_sensor_battery','Motion Sensor': 'bathroom_motion_sensor_battery', 'Leak Detector': 'bathroom_water_detector_battery_level', 'Radiator': 'bathroom_radiator_battery_level' } %}
 
 - title: Bathrooms
   path: bathrooms
-  icon: mdi:shower-head
-
+  type: custom:grid-layout
+  icon: mdi:toilet
+  layout:
+    grid-template-columns: 1fr 1fr 1fr
+    grid-template-rows: auto
+    grid-gap: 12px
+    margin: 20px
+    grid-template-areas: |
+      "header chips chips"
+      "col1 col2 col3"
+    mediaquery:
+      "(max-width: 500px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "chips chips"
+          "header header"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 900px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 1200px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col2"
+          "col3 col2"
+          "col3 ."
   cards:
 
-    - type: horizontal-stack
-      cards:
-        - !include ../chips/chip_back.yaml
-        #- !include ../chips/presence.yaml
-        #- !include ../chips/wifi.yaml
-        # - !include ../chips/spotify.yaml
-        # - !include ../chips/temperature.yaml
-        # - !include ../chips/chance_of_rain.yaml
+    # GRID AREA HEADER
+    - type: custom:decluttering-card
+      template: mushroom_view_header
+      view_layout:
+        grid-area: header
+      variables:
+        - room: Bathrooms
 
+    # GRID AREA CHIPS
+    - type: custom:decluttering-card
+      template: mushroom_chips
+      view_layout:
+        grid-area: chips
+      variables:
+        - occupancy_sensor: binary_sensor.toilet_occupancy
+        - occupancy_sensor_2: binary_sensor.bathroom_occupancy
+
+    # GRID AREA COL1
     - type: vertical-stack
+      view_layout:
+        grid-area: col1
       cards:
 
-        - type: custom:button-card
-          template: card_title
-          name: "Family Bathroom"
-          label: Heating
+        - type: heading
+          heading: Downstairs Toilet
+          icon: mdi:toilet
+          badges:
+            - type: entity
+              entity: sensor.downstairs_toilet_temperature
+              show_state: true
+              show_icon: false
+            - type: entity
+              entity: light.downstairs_toilet
+              tap_action:
+                action: toggle
+              show_state: true
+              color: state
 
-        - type: "custom:button-card"
-          template: card_climate
-          entity: climate.bathroom
+        - type: custom:mushroom-light-card
+          entity: light.downstairs_toilet
+          name: "Ceiling Light"
+          fill_container: false
+          use_light_color: true
+          show_brightness_control: true
+          # show_color_temp_control: true
+          # show_color_control: true
+          collapsible_controls: true
+
+        - type: custom:mushroom-climate-card
+          entity: climate.downstairs_toilet
+          name: Radiator
+          icon: mdi:thermometer
+          show_temperature_control: true
+          collapsible_controls: true
+          tap_action:
+            action: more-info
+
+        - type: heading
+          heading: Environment
+          heading_style: subtitle
+
+        - type: custom:decluttering-card
+          template: mushroom_graph
           variables:
-            ulm_card_thermostat_name: "Radiator"
+            - entity_one: sensor.downstairs_toilet_temperature
+            - entity_one_name: Temperature
 
-    - type: vertical-stack
-      cards:
-
-        - type: custom:button-card
-          template: card_title
-          name: "En Suite"
-          label: Heating
-
-        - type: "custom:button-card"
-          template: card_climate
-          entity: climate.en_suite
-          variables:
-            ulm_card_thermostat_name: "Radiator"
-
-    - type: vertical-stack
-      cards:
-
-        - type: custom:button-card
-          template: card_title
-          label: Batteries
+        - type: heading
+          heading: Batteries
+          heading_style: subtitle
 
         - type: grid
           columns: 2
           square: false
           cards:
 
-            {% for x in batteries %}
-            - type: custom:button-card
-              template: card_battery
-              entity: sensor.{{ x }}
+            {% for key, val in toilet_batteries.items() %}
+            - type: custom:decluttering-card
+              template: mushroom_battery
               variables:
-                ulm_card_battery_battery_level_danger: 10
-                ulm_card_battery_battery_level_warning: 30
+                - entity_id: sensor.{{ val }}
+                - title: "{{ key }}"
             {% endfor %}
+
+    # GRID AREA COL2
+    - type: vertical-stack
+      view_layout:
+        grid-area: col2
+      cards:
+
+        - type: heading
+          heading: Family Bathroom
+          icon: mdi:shower
+          badges:
+            - type: entity
+              entity: sensor.bathroom_temperature
+              show_state: true
+              show_icon: false
+            - type: entity
+              entity: light.bathroom
+              tap_action:
+                action: toggle
+              show_state: true
+              color: state
+
+        - type: custom:mushroom-light-card
+          entity: light.bathroom
+          name: "Ceiling Light"
+          fill_container: false
+          use_light_color: true
+          show_brightness_control: true
+          # show_color_temp_control: true
+          # show_color_control: true
+          collapsible_controls: true
+
+        - type: custom:mushroom-climate-card
+          entity: climate.bathroom
+          name: Radiator
+          icon: mdi:thermometer
+          show_temperature_control: true
+          collapsible_controls: true
+          tap_action:
+            action: more-info
+
+        - type: heading
+          heading: Environment
+          heading_style: subtitle
+
+        - type: custom:decluttering-card
+          template: mushroom_graph
+          variables:
+            - entity_one: sensor.bathroom_temperature
+            - entity_one_name: Temperature
+
+        - type: heading
+          heading: Batteries
+          heading_style: subtitle
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+
+            {% for key, val in bathroom_batteries.items() %}
+            - type: custom:decluttering-card
+              template: mushroom_battery
+              variables:
+                - entity_id: sensor.{{ val }}
+                - title: "{{ key }}"
+            {% endfor %}
+
+    # GRID AREA COL3
+    - type: vertical-stack
+      view_layout:
+        grid-area: col3
+      cards:
+
+        - type: heading
+          heading: En Suite
+          icon: mdi:shower-head
+          badges:
+            - type: entity
+              entity: sensor.en_suite_temperature
+              show_state: true
+              show_icon: false
+            # - type: entity
+            #   entity: light.bathroom
+            #   tap_action:
+            #     action: toggle
+            #   show_state: true
+            #   color: state
+
+        - type: custom:mushroom-climate-card
+          entity: climate.en_suite
+          name: Radiator
+          icon: mdi:thermometer
+          show_temperature_control: true
+          collapsible_controls: true
+          tap_action:
+            action: more-info
+
+        - type: heading
+          heading: Environment
+          heading_style: subtitle
+
+        - type: custom:decluttering-card
+          template: mushroom_graph
+          variables:
+            - entity_one: sensor.en_suite_temperature
+            - entity_one_name: Temperature
+
+        - type: heading
+          heading: Batteries
+          heading_style: subtitle
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+            - type: custom:decluttering-card
+              template: mushroom_battery
+              variables:
+                - entity_id: sensor.en_suite_radiator_battery_level
+                - title: "Radiator"

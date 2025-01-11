@@ -1,0 +1,21 @@
+# TODO: Re-enable this in winter
+# - alias: Master Bedroom - Turn on Heated Blanket
+#   id: "1697746271"
+#   description: "Turns on the heated blanket for 90 minutes when the Master Bedroom is in Wind Down mode and it's cold"
+#   condition:
+#     condition: and
+#     conditions:
+#       # 1. Sleep mode is currently set to Wind Down
+#       - condition: template
+#         value_template: "{{ float(states('input_number.master_bedroom_bedtime_status')) == 1.0 }}"
+#       # 2. It's cold in the bedroom
+#       - condition: numeric_state
+#         entity_id: sensor.master_bedroom_temperature
+#         below: 14.0
+#   action:
+#     - action: switch.turn_on
+#       entity_id: switch.bed
+#     - delay:
+#         minutes: 90
+#     - action: switch.turn_off
+#       entity_id: switch.bed

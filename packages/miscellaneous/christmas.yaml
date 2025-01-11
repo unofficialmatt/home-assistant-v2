@@ -1,0 +1,114 @@
+group:
+  christmas_switches_indoor:
+    name: Christmas Switches Indoor
+    entities:
+      - switch.fairy_lights
+      - switch.christmas_tree
+      - switch.christmas_wreath
+  christmas_switches_outdoor:
+    name: Christmas Switches Outdoor
+    entities:
+      - switch.christmas_outdoors
+      - switch.christmas_window
+  christmas_switches:
+    name: Christmas Switches
+    entities:
+      - group.christmas_switches_indoor
+      - group.christmas_switches_outdoor
+
+automation:
+  - alias: Christmas Lights - ON Evening
+    id: "christmas_lights_on_evening"
+    description: Turns Christmas lights on in the evening
+    trigger:
+      - platform: state
+        entity_id: input_select.home_status
+        to: "Home"
+      - platform: sun
+        event: sunset
+        offset: "-00:30:00"
+    condition:
+      condition: and
+      conditions:
+        # Only turn on the lights if it's December
+        - condition: template
+          value_template: "{{ now().month == 12 }}"
+        # Only turn on if it's before 11pm
+        - condition: time
+          before: "23:00:00"
+        # Only turn on if it's after 3pm
+        - condition: time
+          after: "15:00:00"
+    action:
+      - service: homeassistant.turn_on
+        entity_id: group.christmas_switches_outdoor
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_select.home_status
+                state: "Home"
+            sequence:
+              - service: homeassistant.turn_on
+                entity_id: group.christmas_switches_indoor
+
+  - alias: Christmas Lights - ON Morning
+    id: "christmas_lights_on_morning"
+    description: Turns Christmas lights on in the morning
+    trigger:
+      - platform: sun
+        event: sunrise
+        offset: "-01:00:00"
+    # Only turn on the lights if it's December
+    condition:
+      - condition: template
+        value_template: "{{ now().month == 12 }}"
+    action:
+      - service: homeassistant.turn_on
+        entity_id: group.christmas_switches_outdoor
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_select.home_status
+                state: "Home"
+            sequence:
+              - service: homeassistant.turn_on
+                entity_id: group.christmas_switches_indoor
+
+  - alias: Christmas Lights Outdoor - OFF
+    id: "christmas_lights_off_outdoor"
+    description: Turns Christmas lights off at 11pm at night, at 1 hr after sunrise
+    trigger:
+      - platform: time
+        at: "23:00:00"
+      - platform: sun
+        event: sunrise
+        offset: "01:00:00"
+    # Only run if the group is on
+    condition:
+      - condition: state
+        entity_id: group.christmas_switches_outdoor
+        state: "on"
+    action:
+      - service: homeassistant.turn_off
+        entity_id: group.christmas_switches_outdoor
+
+  - alias: Christmas Lights Indoor - OFF
+    id: "christmas_lights_off_indoors"
+    description: Turns Christmas indoor lights off when the house becomes unoccupied, or when the bedtime routine is triggered
+    trigger:
+      - platform: state
+        entity_id: input_select.home_status
+        to: "Away"
+      # Automation automation.bedtime_shut_down_house is fired
+      - platform: event
+        event_type: automation_triggered
+        event_data:
+          entity_id: automation.bedtime_shut_down_house
+    # Only run if the group is on
+    condition:
+      - condition: state
+        entity_id: group.christmas_switches_indoor
+        state: "on"
+    action:
+      - service: homeassistant.turn_off
+        entity_id: group.christmas_switches_indoor

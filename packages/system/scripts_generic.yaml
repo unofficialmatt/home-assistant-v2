@@ -1,0 +1,52 @@
+script:
+  decrement_datetime:
+    alias: Decrement Input Datetime by 15 Minutes
+    description: Decrements the provided input_datetime entity by 15 minutes
+    icon: mdi:minus
+    fields:
+      entity_id:
+        name: Entity
+        description: The input_datetime entity to decrement
+        example: input_datetime.alarm_time
+        selector:
+          entity:
+            domain: input_datetime
+    sequence:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: "{{ entity_id }}"
+        data:
+          time: "{{ (now().replace(hour=states(entity_id).split(':')[0] | int, minute=states(entity_id).split(':')[1] | int, second=states(entity_id).split(':')[2] | int) - timedelta(minutes=15)).strftime('%H:%M:%S') }}"
+    mode: single
+  increment_datetime:
+    alias: Increment Input Datetime by 15 Minutes
+    description: Increments the provided input_datetime entity by 15 minutes
+    icon: mdi:plus
+    fields:
+      entity_id:
+        name: Entity
+        description: The input_datetime entity to increment
+        example: input_datetime.alarm_time
+        selector:
+          entity:
+            domain: input_datetime
+    sequence:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: "{{ entity_id }}"
+        data:
+          time: "{{ (now().replace(hour=states(entity_id).split(':')[0] | int, minute=states(entity_id).split(':')[1] | int, second=states(entity_id).split(':')[2] | int) + timedelta(minutes=15)).strftime('%H:%M:%S') }}"
+    mode: single
+  turn_off_all_hardware:
+    sequence:
+      - action: light.turn_off
+        entity_id: light.all_lights
+        data:
+          transition: 10
+
+      - action: homeassistant.turn_off
+        entity_id: group.google_home_speakers
+
+      # - action: homeassistant.turn_off
+      #   entity_id: group.christmas_switches
+# TODO: WHAT ELSE HERE. EG SWITCHES, TV, ETC

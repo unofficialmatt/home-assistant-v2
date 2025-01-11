@@ -1,0 +1,35 @@
+group:
+  hallway_motion:
+    name: "Hallway Motion"
+    entities:
+      - binary_sensor.hallway_motion_sensor_motion
+      - binary_sensor.hallway_motion_sensor_2_motion
+
+automation:
+  - alias: Hallway - Turn On Lights on Motion Detection
+    id: "hallway_lights_on_motion"
+    description: "Turns on Hallway Lights when motion is detected"
+    trigger:
+      - platform: state
+        entity_id: group.hallway_motion
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: light.hallway
+        state: "off"
+    action:
+      - action: light.turn_on
+        entity_id: light.hallway
+
+  - alias: Hallway - turn off lights when unoccupied
+    id: "hallway_lights_off_when_unoccupied"
+    description: "Turns off Hallway Lights when motion is no longer detected"
+    trigger:
+      - platform: state
+        entity_id: group.hallway_motion
+        to: "off"
+    action:
+      - action: light.turn_off
+        entity_id: light.hallway
+        data:
+          transition: 5

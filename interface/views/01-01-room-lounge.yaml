@@ -1,126 +1,217 @@
 # lovelace_gen
-{% set lights = [ 'lounge_colour', 'lounge_floor_lamp','dining_room_colour' ] %}
-{% set batteries = [ 'lounge_switch_battery', 'lounge_radiator_battery_level','dining_room_radiator_battery_level' ] %}
+{% set lights = { 'Lounge Ceiling': 'lounge_colour', 'Dining Ceiling': 'dining_room_colour', 'TV Left': 'lounge_tv_left', 'TV Right': 'lounge_tv_right', 'Dining Floor': 'dining_room_floor', 'Drinks Cabinet': 'drinks_cabinet' } %}
+{% set switches = { 'TV + Hue': 'lounge_tv_ambilight_hue'} %}
+{% set batteries = {'Dimmer': 'lounge_switch_battery','Lounge Radiator': 'lounge_radiator_battery_level', 'Dining Radiator':'dining_room_radiator_battery_level' } %}
 
 - title: Lounge
   path: lounge
+  type: custom:grid-layout
   icon: mdi:sofa
-
+  layout:
+    grid-template-columns: 1fr 1fr 1fr
+    grid-template-rows: auto
+    grid-gap: 12px
+    margin: 20px
+    grid-template-areas: |
+      "header chips chips"
+      "col1 col2 col3"
+    mediaquery:
+      "(max-width: 500px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "chips chips"
+          "header header"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 900px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 1200px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col3"
+          "col2 col3"
+          "col2 ."
   cards:
 
-    - type: horizontal-stack
-      cards:
-        - !include ../chips/chip_back.yaml
-        - type: 'custom:button-card'
-          template: chip_occupancy
-          entity: binary_sensor.lounge_occupancy
-        - type: custom:button-card
-          template: chip_vacuum_room
-          variables:
-            ulm_card_segments: '["18","20"]'
+    # GRID AREA HEADER
+    - type: custom:decluttering-card
+      template: mushroom_view_header
+      view_layout:
+        grid-area: header
+      variables:
+        - room: Lounge / Diner
 
+    # GRID AREA CHIPS
+    - type: custom:decluttering-card
+      template: mushroom_chips
+      view_layout:
+        grid-area: chips
+      variables:
+        - occupancy_sensor: binary_sensor.lounge_occupancy
 
-        #- !include ../chips/presence.yaml
-        #- !include ../chips/wifi.yaml
-        # - !include ../chips/spotify.yaml
-        # - !include ../chips/temperature.yaml
-        # - !include ../chips/chip_chance_of_rain.yaml
-
+    # GRID AREA COL1
     - type: vertical-stack
+      view_layout:
+        grid-area: col1
       cards:
 
-        - type: custom:button-card
-          template: card_title
-          name: "Lounge & Diner"
-          label: "Lights"
+        - type: heading
+          heading: Lights
+          icon: mdi:lightbulb-on-outline
+          badges:
+            - type: entity
+              entity: light.lounge
+              tap_action:
+                action: toggle
+              show_state: true
+              color: state
+
+
+        - type: custom:decluttering-card
+          template: mushroom_scene_select
+          variables:
+            - room: lounge
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+            {% for key, val in lights.items() %}
+            - type: custom:mushroom-light-card
+              entity: light.{{ val }}
+              name: "{{ key }}"
+              use_light_color: true
+              show_brightness_control: true
+              # show_color_temp_control: true
+              # show_color_control: true
+              collapsible_controls: true
+            {% endfor %}
+
+
+        # - type: heading
+        #   heading: Devices
+        #   icon: mdi:chip
+
+        # - type: "custom:button-card"
+        #   template: card_vacuum
+        #   entity: vacuum.valetudo_roborock
+        #   variables:
+        #     ulm_card_vacuum_name: Robbie the Rover
+        #     ulm_card_vacuum_camera: camera.rockrobo_map
+
+    # GRID AREA COL2
+    - type: vertical-stack
+      view_layout:
+        grid-area: col2
+      cards:
+
+        - type: heading
+          heading: Heating
+          icon: mdi:radiator
+          badges:
+            - type: entity
+              entity: sensor.lounge_temperature
+              show_state: true
+              show_icon: false
+
+        - type: custom:mushroom-climate-card
+          entity: climate.lounge
+          name: Lounge Radiator
+          icon: mdi:thermometer
+          show_temperature_control: true
+          collapsible_controls: true
+          tap_action:
+            action: more-info
+
+        - type: custom:mushroom-climate-card
+          entity: climate.dining_room
+          name: Dining Radiator
+          icon: mdi:thermometer
+          show_temperature_control: true
+          collapsible_controls: true
+          tap_action:
+            action: more-info
+
+        - type: heading
+          heading: Switches
+          icon: mdi:power-socket-uk
 
         - type: grid
           columns: 2
           square: false
           cards:
 
-          {% for x in lights %}
-          - type: custom:button-card
-            template: card_light
-            entity: light.{{ x }}
+          {% for key, val in switches.items() %}
+          - type: custom:decluttering-card
+            template: mushroom_switch
             variables:
-              ulm_card_light_enable_slider: true
-              ulm_card_light_enable_color: true
-              #ulm_card_light_force_background_color: true
-              ulm_card_light_enable_collapse: true
-              ulm_card_light_enable_popup: true
+              - entity_id: switch.{{ val }}
+              - title: "{{ key }}"
           {% endfor %}
 
+        - type: heading
+          heading: Media
+          icon: mdi:cast
+
+        # TODO: TV
+        # TODO: PS5
+        # TODO: SWITCH
+        # TODO: APPLE TV
+
+        - type: custom:decluttering-card
+          template: mushroom_speaker
+          variables:
+            - entity: media_player.lounge_speaker
+
+    # GRID AREA COL3
     - type: vertical-stack
+      view_layout:
+        grid-area: col3
       cards:
 
-        - type: custom:button-card
-          template: card_title
-          label: Heating
+        - type: heading
+          heading: Devices
+          icon: mdi:chip
 
-        - type: "custom:button-card"
-          template: card_climate
-          entity: climate.lounge
+        - type: custom:decluttering-card
+          template: mushroom_vacuum
+
+        - type: heading
+          heading: Sensors
+          icon: mdi:graph
+
+        - type: heading
+          heading: Environment
+          heading_style: subtitle
+
+        - type: custom:decluttering-card
+          template: mushroom_graph_double
           variables:
-            ulm_card_thermostat_name: "Lounge Radiator"
+            - entity_one: sensor.lounge_temperature
+            - entity_one_name: Lounge
+            - entity_two: sensor.dining_room_temperature
+            - entity_two_name: Dining Rm
 
-        - type: "custom:button-card"
-          template: card_climate
-          entity: climate.dining_room
-          variables:
-            ulm_card_thermostat_name: "Dining Room Radiator"
-
-    - type: vertical-stack
-      cards:
-
-        - type: custom:button-card
-          template: card_title
-          label: "Media Players"
-
-        - type: custom:button-card
-          template: card_media_player
-          entity: media_player.lounge_speaker
-          variables:
-            ulm_card_media_player_name: Google Speaker
-            ulm_card_media_player_enable_art: true
-            ulm_card_media_player_enable_controls: true
-            ulm_card_media_player_enable_volume_slider: true
-            ulm_card_media_player_enable_popup: true
-            ulm_card_media_player_collapsible: true
-            ulm_card_media_player_more_info: true
-
-
-    - type: vertical-stack
-      cards:
-
-        - type: custom:button-card
-          template: card_title
-          label: "Devices"
-
-        - type: "custom:button-card"
-          template: card_vacuum
-          entity: vacuum.valetudo_roborock
-          variables:
-            ulm_card_vacuum_name: Robbie the Rover
-            ulm_card_vacuum_camera: camera.rockrobo_map
-
-    - type: vertical-stack
-      cards:
-
-        - type: custom:button-card
-          template: card_title
-          label: Batteries
+        - type: heading
+          heading: Batteries
+          heading_style: subtitle
 
         - type: grid
           columns: 2
           square: false
           cards:
 
-            {% for x in batteries %}
-            - type: custom:button-card
-              template: card_battery
-              entity: sensor.{{ x }}
+            {% for key, val in batteries.items() %}
+            - type: custom:decluttering-card
+              template: mushroom_battery
               variables:
-                ulm_card_battery_battery_level_danger: 10
-                ulm_card_battery_battery_level_warning: 30
+                - entity_id: sensor.{{ val }}
+                - title: "{{ key }}"
             {% endfor %}

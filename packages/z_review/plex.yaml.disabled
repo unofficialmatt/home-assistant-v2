@@ -1,0 +1,21 @@
+homeassistant:
+  customize_glob:
+    "*plex*":
+      icon: mdi:plex
+sensor:
+  - platform: plex_recently_added
+    name: Recently Added Movies
+    token: !secret plex_token
+    host: localhost
+    port: 32400
+    max: 6
+    section_types:
+      - movie
+  - platform: plex_recently_added
+    name: Recently Added TV
+    token: !secret plex_token
+    host: localhost
+    port: 32400
+    max: 6
+    section_types:
+      - show

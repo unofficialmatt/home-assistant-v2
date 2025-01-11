@@ -1,0 +1,81 @@
+homeassistant:
+  customize_glob:
+    "*holiday_lights*":
+      hidden: true
+      icon: mdi:island
+
+# THESE AUTOMATIONS TRIGGER ONLY IF HOME STATUS IS SET TO HOLIDAY THESE WERE PORTED IN A RUSH SO NEED TESTING.
+automation:
+  - alias: Holiday Lights - On
+    id: "holiday_mode_lights_on"
+    description: "Turns on lights when home status is set to Holiday"
+    trigger:
+      # Right before sunset
+      - platform: sun
+        event: sunset
+        offset: "-00:30:00"
+      # On sunrise
+      - platform: sun
+        event: sunrise
+        offset: "00:30:00"
+      # At 6:30am
+      - platform: time
+        at: "06:30:00"
+      # At 19:00
+      - platform: time
+        at: "19:00:00"
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: input_select.home_status
+          state: "Holiday"
+        - condition: state
+          entity_id: light.man_cave
+          state: "off"
+    action:
+      - service: light.turn_on
+        data:
+          entity_id:
+            # - light.landing
+            - light.hallway
+            - light.kitchen
+            - light.master_bedroom
+            - light.man_cave
+
+  - alias: Holiday Lights - Off
+    id: "holiday_mode_lights_off"
+    description: "Turns off lights when home status is set to Holiday"
+    trigger:
+      # After sunset + 3.5 hours
+      - platform: sun
+        event: sunset
+        offset: "03:30:00"
+      # After sunrise
+      - platform: sun
+        event: sunrise
+        offset: "01:45:00"
+      # At 11:00am
+      - platform: time
+        at: "11:00:00"
+      # At 23:00
+      - platform: time
+        at: "23:00:00"
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: input_select.home_status
+          state: "Holiday"
+        - condition: state
+          entity_id: light.man_cave
+          state: "on"
+    action:
+      - service: light.turn_off
+        data:
+          entity_id:
+            # - light.landing
+            - light.hallway
+            - light.kitchen
+            - light.master_bedroom
+            - light

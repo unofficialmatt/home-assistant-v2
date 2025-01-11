@@ -1,0 +1,49 @@
+group:
+  landing_motion:
+    name: "Landing Motion"
+    entities:
+      - binary_sensor.landing_motion_sensor_motion
+      - binary_sensor.landing_motion_sensor_2_motion
+
+automation:
+  - alias: Landing - Turn On Lights on Motion Detection
+    id: "landing_lights_on_motion"
+    description: "Turns on Landing Lights when motion is detected"
+    trigger:
+      - platform: state
+        entity_id: group.landing_motion
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: light.landing
+        state: "off"
+    action:
+      - action: light.turn_on
+        entity_id: light.landing
+      - action: script.notify_engine
+        data:
+          TITLE: "Landing Lights On"
+          MESSAGE: >
+            "landing_lights_on_motion"
+          DEBUG: true
+          LOCATION: "any"
+
+  - alias: Landing - turn off lights when unoccupied
+    id: "landing_lights_off_when_unoccupied"
+    description: "Turns off Landing Lights when motion is no longer detected"
+    trigger:
+      - platform: state
+        entity_id: group.landing_motion
+        to: "off"
+    action:
+      - action: light.turn_off
+        entity_id: light.landing
+        data:
+          transition: 5
+      - action: script.notify_engine
+        data:
+          TITLE: "Landing Lights Off"
+          MESSAGE: >
+            "landing_lights_off_when_unoccupied"
+          DEBUG: true
+          LOCATION: "any"

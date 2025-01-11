@@ -1,0 +1,19 @@
+# TODO: REWRITE USING BAMBU LAB INTEGRATION with a photo of the last print
+automation:
+  - alias: 3D Printer - Printing Complete
+    id: "1697392923"
+    description: "Turns off the 3D Printer when the plug has been idle for 15 mins, and sends a notification to anyone who is home."
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.3d_printer_printing
+        to: "off"
+        for:
+          minutes: 15
+    action:
+      - action: switch.turn_off
+        entity_id: switch.3d_printer
+      - action: script.notify_engine
+        data:
+          notify_title: "Printing Complete"
+          notify_message: "Your shiny new 3D print is complete - enjoy!"
+# todo notify if spagehti

@@ -1,81 +1,154 @@
 # lovelace_gen
-{% set lights = [ 'nook' ] %}
-{% set batteries = [ 'nook_radiator_battery_level' ] %}
-
+{% set lights = { 'Ceiling': 'nook_ceiling',  'Hue Go': 'hue_go', 'Board Games': 'nook_cupboard_light' } %}
+{% set batteries = {'Dimmer': 'nook_dimmer_battery', 'Radiator':'nook_radiator_battery_level' } %}
 
 - title: Nook
   path: nook
-  icon: mdi:rabbit
-
+  type: custom:grid-layout
+  icon: mdi:dice-5
+  layout:
+    grid-template-columns: 1fr 1fr 1fr
+    grid-template-rows: auto
+    grid-gap: 12px
+    margin: 20px
+    grid-template-areas: |
+      "header chips chips"
+      "col1 col2 col3"
+    mediaquery:
+      "(max-width: 500px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "chips chips"
+          "header header"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 900px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 1200px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col3"
+          "col2 col3"
+          "col2 ."
   cards:
-    - type: horizontal-stack
-      cards:
-        - !include ../chips/chip_back.yaml
-        # - type: custom:button-card
-        #   template: chip_vacuum_room
-        #   variables:
-        #     ulm_card_segments: '["19"]'
-        #- !include ../chips/presence.yaml
-        #- !include ../chips/wifi.yaml
-        # - !include ../chips/spotify.yaml
-        # - !include ../chips/temperature.yaml
-        # - !include ../chips/chance_of_rain.yaml
 
+    # GRID AREA HEADER
+    - type: custom:decluttering-card
+      template: mushroom_view_header
+      view_layout:
+        grid-area: header
+      variables:
+        - room: Nook
+
+    # GRID AREA CHIPS
+    - type: custom:decluttering-card
+      template: mushroom_chips
+      view_layout:
+        grid-area: chips
+      variables:
+        - occupancy_sensor: binary_sensor.nook_occupancy
+
+    # GRID AREA COL1
     - type: vertical-stack
+      view_layout:
+        grid-area: col1
       cards:
 
-        - type: custom:button-card
-          template: card_title
-          name: "Nook"
-          label: "Lights"
+        - type: heading
+          heading: Lights
+          icon: mdi:lightbulb-on-outline
+          badges:
+            - type: entity
+              entity: light.nook_all
+              tap_action:
+                action: toggle
+              show_state: true
+              color: state
 
-        - type: grid
-          columns: 2
-          square: false
-          cards:
-
-          {% for x in lights %}
-          - type: custom:button-card
-            template: card_light
-            entity: light.{{ x }}
-            variables:
-              ulm_card_light_enable_slider: true
-              ulm_card_light_enable_color: true
-              #ulm_card_light_force_background_color: true
-              ulm_card_light_enable_collapse: true
-              ulm_card_light_enable_popup: true
-          {% endfor %}
-
-    - type: vertical-stack
-      cards:
-
-        - type: custom:button-card
-          template: card_title
-          label: Heating
-
-        - type: "custom:button-card"
-          template: card_climate
-          entity: climate.nook
+        - type: custom:decluttering-card
+          template: mushroom_scene_select
           variables:
-            ulm_card_thermostat_name: "Radiator"
+            - room: nook
 
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+            {% for key, val in lights.items() %}
+            - type: custom:mushroom-light-card
+              entity: light.{{ val }}
+              name: "{{ key }}"
+              use_light_color: true
+              show_brightness_control: true
+              # show_color_temp_control: true
+              # show_color_control: true
+              collapsible_controls: true
+            {% endfor %}
+
+    # GRID AREA COL2
     - type: vertical-stack
+      view_layout:
+        grid-area: col2
       cards:
 
-        - type: custom:button-card
-          template: card_title
-          label: Batteries
+        - type: heading
+          heading: Heating
+          icon: mdi:radiator
+          badges:
+            - type: entity
+              entity: sensor.nook_temperature
+              show_state: true
+              show_icon: false
+
+        - type: custom:mushroom-climate-card
+          entity: climate.nook
+          name: Radiator
+          icon: mdi:thermometer
+          show_temperature_control: true
+          collapsible_controls: true
+          tap_action:
+            action: more-info
+
+    # GRID AREA COL3
+    - type: vertical-stack
+      view_layout:
+        grid-area: col3
+      cards:
+
+        - type: heading
+          heading: Sensors
+          icon: mdi:graph
+
+        - type: heading
+          heading: Environment
+          heading_style: subtitle
+
+        - type: custom:decluttering-card
+          template: mushroom_graph
+          variables:
+            - entity_one: sensor.nook_temperature
+            - entity_one_name: Temperature
+
+        - type: heading
+          heading: Batteries
+          heading_style: subtitle
 
         - type: grid
           columns: 2
           square: false
           cards:
 
-            {% for x in batteries %}
-            - type: custom:button-card
-              template: card_battery
-              entity: sensor.{{ x }}
+            {% for key, val in batteries.items() %}
+            - type: custom:decluttering-card
+              template: mushroom_battery
               variables:
-                ulm_card_battery_battery_level_danger: 10
-                ulm_card_battery_battery_level_warning: 30
+                - entity_id: sensor.{{ val }}
+                - title: "{{ key }}"
             {% endfor %}

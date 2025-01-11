@@ -1,0 +1,153 @@
+mushroom_recipe_selector:
+  card:
+    type: custom:mushroom-template-card
+    entity: "sensor.paprika_[[recipe]]"
+    primary: "{{ states('sensor.paprika_[[recipe]]') }}"
+    secondary: >
+      {% set date_str = state_attr('sensor.paprika_[[recipe]]', 'date') %}
+      {% set date_obj = strptime(date_str, '%Y-%m-%d') %}
+      {% set day = date_obj.day %}
+      {% set suffix = 'th' if 4 <= day <= 20 or 24 <= day <= 30 else ['st', 'nd', 'rd'][day % 10 - 1] %}
+      {{ day }}{{ suffix }} {{ date_obj.strftime('%B') }}
+    icon: ""
+    picture: "{{ state_attr('sensor.paprika_[[recipe]]','photo_url') }}"
+    tap_action:
+      action: navigate
+      navigation_path: "#[[recipe]]"
+    hold_action:
+      action: none
+    double_tap_action:
+      action: none
+    card_mod:
+      style:
+        mushroom-state-info$: |
+          .primary {
+            --card-primary-font-size: 1.1rem;
+            --card-primary-line-height: 1.1 !important;
+            font-weight: 400 !important;
+            white-space: normal !important;
+            margin-bottom: 4px;
+          }
+          .secondary {
+            white-space: normal !important;
+          }
+
+mushroom_recipe_remove:
+  card:
+    type: custom:mushroom-template-card
+    entity: "sensor.paprika_[[recipe]]"
+    primary: "Mark meal as eaten"
+    secondary: "{{ states('sensor.paprika_[[recipe]]') }}"
+    icon: "mdi:delete"
+    icon_color: red
+    tap_action:
+      action: perform-action
+      perform_action: script.paprika_remove_meal
+      service_data:
+        uid: "[[recipe_uid]]"
+    hold_action:
+      action: none
+    double_tap_action:
+      action: none
+    card_mod:
+      style:
+        mushroom-state-info$: |
+          .primary {
+            white-space: normal !important;
+          }
+          .secondary {
+            white-space: normal !important;
+          }
+        .: |
+          ha-card {
+            background: rgba(var(--rgb-red), 0.2);
+            margin-top: 20px;
+            margin-bottom: 20px;
+          }
+mushroom_recipe_title:
+  card:
+    type: custom:mushroom-template-card
+    entity: "sensor.paprika_[[recipe]]"
+    primary: "{{ states('sensor.paprika_[[recipe]]') }}"
+    secondary: >
+      Serves: {{ state_attr('sensor.paprika_[[recipe]]','servings') }} •
+      {% set date_str = state_attr('sensor.paprika_[[recipe]]', 'date') %}
+      {% set date_obj = strptime(date_str, '%Y-%m-%d') %}
+      {% set day = date_obj.day %}
+      {% set suffix = 'th' if 4 <= day <= 20 or 24 <= day <= 30 else ['st', 'nd', 'rd'][day % 10 - 1] %}
+      {{ day }}{{ suffix }} {{ date_obj.strftime('%B') }}
+    icon: ""
+    picture: "{{ state_attr('sensor.paprika_[[recipe]]','photo_url') }}"
+    tap_action:
+      # TODO fixme - maybe easier to pass this as a parameter to the template?
+      action: url
+      url_path: "[[source_url]]"
+    hold_action:
+      action: none
+    double_tap_action:
+      action: none
+    card_mod:
+      style:
+        mushroom-shape-avatar$: |
+          .container {
+            --icon-border-radius: 8px;
+            height: var(--icon-size) !important;
+          }
+          @media (max-width: 599px) {
+            .container {
+              --icon-size: 180px;
+              width: 100% !important;
+              margin-bottom: 16px;
+            }
+            .picture {
+              object-fit: cover;
+            }
+          }
+          @media (min-width: 600px) and (max-width: 1024px) {
+            .container {
+              --icon-size: 120px;
+            }
+          }
+          @media (min-width: 1025px) {
+            .container {
+              --icon-size: 150px;
+            }
+          }
+        mushroom-state-item$: |
+          .container {
+            padding: 0px !important;
+          }
+          @media (max-width: 599px) {
+            .container {
+              flex-direction: column !important;
+            }
+            .icon {
+              width: 100%;
+            }
+          }
+          @media (min-width: 600px) {
+            .icon {
+              order: 2;
+              margin-left: 24px;
+            }
+          }
+        mushroom-state-info$: |
+          .primary {
+            --card-primary-font-size: 2.5rem;
+            --card-primary-line-height: 1.1 !important;
+            font-weight: 400 !important;
+            white-space: normal !important;
+            padding-bottom: 12px !important;;
+          }
+          .secondary {
+            --card-secondary-font-size: 1.25rem;
+            line-height: 1.2 !important;
+            white-space: normal !important;
+          }
+        .: |
+          ha-card {
+            background: transparent;
+            box-shadow: none;
+            padding: 0px;
+            margin: 0px;
+          }

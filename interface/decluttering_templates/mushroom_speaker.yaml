@@ -1,0 +1,92 @@
+mushroom_speaker:
+  card:
+    type: vertical-stack
+    cards:
+      - type: conditional
+        conditions:
+          - entity: "[[entity]]"
+            state: "off"
+        card:
+          type: custom:mushroom-media-player-card
+          name: Google Speaker
+          entity: "[[entity]]"
+          tap_action:
+            action: fire-dom-event
+            browser_mod:
+              service: browser_mod.popup
+              data:
+                title: Spotify
+                content:
+                  type: custom:decluttering-card
+                  template: mushroom_spotify_stack
+                right_button: Play Spotify on this device
+                right_button_action:
+                  service: script.spotify_takeover
+                  data:
+                    device_name: "[[device_name]]"
+
+      - type: conditional
+        conditions:
+          - entity: "[[entity]]"
+            state_not: "unavailable"
+          - entity: "[[entity]]"
+            state_not: "unknown"
+          - entity: "[[entity]]"
+            state_not: "off"
+        card:
+          type: custom:mini-media-player
+          entity: "[[entity]]"
+          artwork: cover
+          name: Google Speaker
+          tap_action:
+            action: fire-dom-event
+            browser_mod:
+              service: browser_mod.popup
+              data:
+                title: Spotify
+                content:
+                  type: custom:decluttering-card
+                  template: mushroom_spotify_stack
+          hide:
+            icon: true
+            # progress: true
+            prev: true
+            next: true
+            power: true
+          card_mod:
+            style:
+              .: |
+                ha-card {
+                  aspect-ratio: 3/2;
+                }
+                .mmp-player {
+                  height: 100%;
+                  display:flex;
+                  flex-direction: column;
+                }
+                .entity__info__name {
+                  font-size: 0.9em;
+                  opacity: 0.5;
+                  margin-bottom: 0.5rem;
+                }
+                .entity__info {
+                  margin-left: 0px !important;
+                  --mmp-info-opacity: 1;
+                }
+                .mmp-player__adds {
+                  margin-top: auto;
+                }
+                .attr__media_title {
+                  display: block;
+                  font-size: 1.4em;
+                  color: white;
+                  margin-bottom: 0.25em;
+                }
+                .attr__media_artist {
+                  display: block;
+                  font-size: 1.2em;
+                  color: white;
+                }
+                .attr__media_artist::before {
+                  content: none !important;;
+                }

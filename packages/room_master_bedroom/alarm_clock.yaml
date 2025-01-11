@@ -1,0 +1,180 @@
+# See https://wltd.org/posts/how-to-automatically-sync-ios-alarms-with-home-assistant
+input_datetime:
+  alarm_weekday:
+    name: Default Weekday Alarm
+    has_date: false
+    has_time: true
+    initial: "06:30:00"
+  alarm_weekend:
+    name: Default Weekend Alarm
+    has_date: false
+    has_time: true
+    initial: "08:30:00"
+    icon: mdi:alarm
+  alarm_time:
+    name: Alarm Time
+    has_date: false
+    has_time: true
+    initial: "06:30:00"
+    icon: mdi:alarm
+
+input_boolean:
+  alarm_clock:
+    name: Enable Alarm Clock
+    initial: on
+    icon: mdi:alarm-check
+
+automation:
+  - alias: Alarm Clock - Auto Set
+    id: "alarm_clock_auto_set"
+    description: "Matt's iPhone sends up the alarm time to Home Assistant into alarm_weekday and alarm_weekend input_datetimes. This automation will check what type of day it is tomorrow and set the alarm accordingly."
+    trigger:
+      - platform: state
+        entity_id: input_datetime.alarm_weekday
+      - platform: state
+        entity_id: input_datetime.alarm_weekend
+      # Fire at 23:55 every day
+      - platform: time
+        at: "23:55:00"
+      # Fire when automation.bedtime_shut_down_house is triggered
+      - platform: event
+        event_type: automation_triggered
+        event_data:
+          entity_id: automation.bedtime_shut_down_house
+    condition:
+      condition: and
+      conditions:
+        # input_datetime.alarm_time has not been updated in the last 12 hours
+        - condition: template
+          value_template: >
+            {{ as_timestamp(states.input_datetime.alarm_time.last_updated) <= as_timestamp(now()) - 12*60*60 }}
+        # It's between 09:00 and 24:00 - prevent running if we go to bed late
+        - condition: time
+          after: "09:00:00"
+          before: "23:59:59"
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.workday_tomorrow
+                state: "off"
+            sequence:
+              - action: input_datetime.set_datetime
+                target:
+                  entity_id: input_datetime.alarm_time
+                data:
+                  time: "{{ state_attr('input_datetime.alarm_weekend', 'timestamp') | int | timestamp_custom('%H:%M:%S', false) }}"
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.workday_tomorrow
+                state: "on"
+            sequence:
+              - action: input_datetime.set_datetime
+                target:
+                  entity_id: input_datetime.alarm_time
+                data:
+                  time: "{{ state_attr('input_datetime.alarm_weekday', 'timestamp') | int | timestamp_custom('%H:%M:%S', false) }}"
+
+  # BIRD SOUNDS AND ARTIFICIAL SUNRISE 15 MINUTES BEFORE ALARM
+  - alias: Alarm Clock - Birds and Sunrise
+    id: "alarm_clock_birds_and_sunrise"
+    description: "Turns on the bedroom light and plays birdsong 15 minutes before the alarm"
+    trigger:
+      platform: template
+      value_template: >
+        {{ (((states.input_datetime.alarm_time.attributes['timestamp']) - (15 * 60)) | timestamp_custom('%H:%M', False) ) == ( states.sensor.time.state ) }}
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: input_select.home_status
+          state: "Home"
+        - condition: state
+          entity_id: input_boolean.alarm_clock
+          state: "on"
+    action:
+      - action: adaptive_lighting.set_manual_control
+        data:
+          entity_id: switch.adaptive_lighting_master_bedroom
+          manual_control: true
+      - action: light.turn_on
+        data:
+          entity_id: light.master_bedroom_colour
+          rgb_color: [165, 115, 42]
+          transition: 900 # 15 minutes in seconds
+      - action: media_player.volume_set
+        data:
+          entity_id: media_player.master_bedroom_wifi
+          volume_level: 0.2
+      - action: media_player.play_media
+        entity_id: media_player.master_bedroom_wifi
+        data:
+          media_content_id: "https://www.gstatic.com/voice_delight/sounds/long/forest.mp3"
+          media_content_type: "music"
+
+  # MORNING BRIEFING IS A TTS AND IOS MESSAGE ALERT THROUGH BEDROOM SPEAKER, OF THE WEATHER AHEAD
+  - alias: Alarm Clock - Morning Briefing
+    id: "alarm_clock_morning_briefing"
+    description: >
+      Greets the day with a weather briefing and plays music
+    trigger:
+      platform: template
+      value_template: >
+        {{ (((states.input_datetime.alarm_time.attributes['timestamp']) | timestamp_custom('%H:%M', False) ) == ( states.sensor.time.state )) }}
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: input_select.home_status
+          state: "Home"
+        - condition: state
+          entity_id: input_boolean.alarm_clock
+          state: "on"
+    action:
+      # - action: switch.turn_off
+      #   entity_id: switch.adaptive_lighting_sleep_mode_master_bedroom
+      - action: adaptive_lighting.set_manual_control
+        data:
+          entity_id: switch.adaptive_lighting_master_bedroom
+          manual_control: false
+      - action: script.tts_engine
+        data:
+          media_player: media_player.master_bedroom_wifi
+          call_outside_weather: 1
+      # Delay allows TTS to put together the notification otherwise the wait template would activate immediately
+      - delay: "00:00:15"
+      - wait_template: "{{ is_state('media_player.master_bedroom_wifi', 'idle') or is_state('media_player.master_bedroom_wifi', 'off') }}"
+      - action: media_player.volume_set
+        data:
+          entity_id: media_player.master_bedroom_wifi
+          volume_level: 0.15
+      # PLAY SPOTIFY IF IT'S NOT ALREADY PLAYING
+      - choose:
+          - conditions:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: media_player.spotify
+                    state: "playing"
+            sequence:
+              - action: script.spotify_play_playlist
+                data:
+                  device_name: Master Bedroom
+                  playlist: >
+                    {{ [ 'Jazz', 'Classical' ] | random }}
+              # - action: spotcast.start
+              #   data:
+              #     device_name: Master Bedroom
+              #     uri: >
+              #       {{ [
+              #       'spotify:playlist:37i9dQZF1DX71VcjjnyaBQ',
+              #       'spotify:playlist:4Gn6rgEi6D1kbXIn5qKHxV',
+              #       'spotify:playlist:37i9dQZF1DWVFeEut75IAL',
+              #       'spotify:playlist:5cwPclg5ZtafoBPWgZMHMb',
+              #       'spotify:playlist:37i9dQZF1DWSGaMpjluQpy',
+              #       ] | random }}
+              #     # Various jazz and classical
+              #     force_playback: true
+              #     random_song: true
+              #     shuffle: true
+              #     repeat: true

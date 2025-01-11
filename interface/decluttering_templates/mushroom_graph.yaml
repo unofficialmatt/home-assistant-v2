@@ -1,0 +1,32 @@
+mushroom_graph:
+  default:
+    - color_one: blue
+    - entity_one_name: "Entity One"
+  card:
+    type: custom:vertical-stack-in-card
+    cards:
+      - type: grid
+        square: false
+        columns: 1
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: "[[entity_one]]"
+            primary_info: state
+            secondary_info: name
+            name: "[[entity_one_name]]"
+            icon_color: "[[color_one]]"
+      - type: custom:mini-graph-card
+        entities:
+          - entity: "[[entity_one]]"
+            name: "[[entity_one_name]]"
+            color: var(--[[color_one]]-color)
+        hours_to_show: 24
+        line_width: 3
+        font_size: 50
+        animate: true
+        show:
+          name: false
+          icon: false
+          state: false
+          legend: false
+          fill: fade

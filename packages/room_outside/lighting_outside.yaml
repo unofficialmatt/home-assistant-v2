@@ -1,0 +1,127 @@
+light:
+  - platform: group
+    name: "Outside"
+    entities:
+      - light.porch
+
+template:
+  - sensor:
+      - name: "Porch Light Color"
+        state: >
+          {% set holidays = {
+            '12-24': [255, 0, 0],
+            '12-25': [255, 0, 0],
+            '12-26': [255, 0, 0],
+            '10-31': [255, 165, 0],
+            '12-31': [128, 0, 128],
+            '02-14': [255, 105, 180],
+            '03-17': [0, 128, 0],
+            '04-18': [255, 255, 0],
+            '04-20': [255, 255, 0],
+            '04-21': [255, 255, 0]
+          } %}
+          {% set today = now().strftime('%m-%d') %}
+
+          {% if states('sensor.next_bin_collection') == '1' and state_attr('sensor.next_bin_collection', 'type') == 'Recycling' %}
+            [0, 0, 255]
+          {% elif states('sensor.next_bin_collection') == '1' and state_attr('sensor.next_bin_collection', 'type') == 'Refuse' %}
+            [0, 255, 0]
+          {% elif today in holidays %}
+            {{ holidays[today] }}
+          {% else %}
+            [255, 227, 165]
+          {% endif %}
+
+        attributes:
+          color_override: >-
+            {% set holidays = {
+              '12-24': [255, 0, 0],
+              '12-25': [255, 0, 0],
+              '12-26': [255, 0, 0],
+              '10-31': [255, 165, 0],
+              '12-31': [128, 0, 128],
+              '02-14': [255, 105, 180],
+              '03-17': [0, 128, 0],
+              '04-18': [255, 255, 0],
+              '04-20': [255, 255, 0],
+              '04-21': [255, 255, 0]
+            } %}
+            {% set today = now().strftime('%m-%d') %}
+            {% if today in holidays or states('sensor.next_bin_collection') == '1' %}
+              true
+            {% else %}
+              false
+            {% endif %}
+          brightness: >-
+            {% if now().hour > 21 %}
+              60
+            {% else %}
+              255
+            {% endif %}
+
+automation:
+  - alias: "Porch - turn light on if motion detected"
+    id: "porch_light_motion"
+    description: "Turns on porch light, if it's not already on, when motion is detected and it's dark"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.porch_motion
+        to: "on"
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: light.porch
+          state: "off"
+        - condition: sun
+          after: sunset
+          before: sunrise
+    action:
+      - action: light.turn_on
+        entity_id: light.porch
+        data:
+          brightness: "{{ state_attr('sensor.porch_light_color', 'brightness') }}"
+          rgb_color: "{{ states('sensor.porch_light_color') }}"
+      - delay: "00:05:00"
+      - action: light.turn_off
+        entity_id: light.porch
+
+  - alias: Porch - turn on light if color override
+    id: "porch_light_on_color_override"
+    description: "If it's bin day tomorrow, or a special day turn on the light at 18:00 or when we get home"
+    trigger:
+      - platform: time
+        at: "18:00:00"
+      - platform: state
+        entity_id: input_select.home_status
+        to: "Home"
+    condition:
+      condition: and
+      conditions:
+        # 1. If there is a special occasion (it's a holiday or bin day)
+        - condition: template
+          value_template: "{{ state_attr('sensor.porch_light_color', 'color_override') == 'true' }}"
+        # 2. If it's dark
+        - condition: time
+          after: "18:00:00"
+          before: "23:00:00"
+    action:
+      - action: light.turn_on
+        entity_id: light.porch
+        data:
+          brightness: "{{ state_attr('sensor.porch_light_color', 'brightness') }}"
+          rgb_color: "{{ states('sensor.porch_light_color') }}"
+
+  - alias: Porch - turn off color override light
+    id: "porch_light_off_color_override"
+    description: "Turn off bin day / special occasion light at 23:00"
+    trigger:
+      - platform: time
+        at: "23:00:00"
+    condition:
+      - condition: template
+        value_template: "{{ state_attr('sensor.porch_light_color', 'color_override') == 'true' }}"
+    action:
+      - action: light.turn_off
+        target:
+          entity_id: light.porch

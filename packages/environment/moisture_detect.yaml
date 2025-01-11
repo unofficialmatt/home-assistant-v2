@@ -1,0 +1,40 @@
+automation:
+  - alias: Moisture Detected Warning
+    id: "moisture_detected_warning"
+    description: "If moisture is detected, send a persistent alert to all phones, and announce via Google Home"
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.bathroom_moisture_detector
+          - binary_sensor.kitchen_sink_moisture_detector
+          - binary_sensor.washing_machine_moisture_detector
+        to: "on"
+    condition:
+      # ONLY RUN IF THE EMERGENCY ALERT IS NOT ALREADY ACTIVE
+      - condition: state
+        entity_id: input_boolean.emergency_alert_active
+        state: "off"
+    action:
+      # TURN ALL LIGHTS UP TO FULL BRIGHTNESS
+      - parallel:
+          - action: light.turn_on
+            entity_id: light.all_lights
+            data:
+              brightness: 255
+              rgb_color: [255, 255, 255]
+          - action: input_boolean.turn_on
+            entity_id: input_boolean.emergency_alert_active
+          - action: script.emergency_tts_loop
+            data_template:
+              tts_message: >
+                Water detected underneath {{ trigger.to_state.attributes.friendly_name }} - act immediately!
+                I repeat, water detected underneath {{ trigger.to_state.attributes.friendly_name }} - act immediately!
+          - action: script.notify_engine
+            data:
+              TITLE: "\u26A0 Water Detected"
+              MESSAGE: >
+                Water detected underneath {{ trigger.to_state.attributes.friendly_name }} - act immediately!
+              DEBUG: false
+              INTERUPTION_MODE: "critical"
+              LOCATION: "any"
+    # TODO: PNLY DO THE LIGHTS AND TTS IF WE ARE HOME

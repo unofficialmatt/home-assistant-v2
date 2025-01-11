@@ -1,0 +1,26 @@
+template:
+  - sensor:
+      - name: "Lowest Petrol Nearby"
+        unit_of_measurement: "£"
+        attributes:
+          entity_id: >
+            {% set lowest_current_fuel = namespace(value=999999) %}
+            {% for petrol_station in states.device_tracker %}
+              {% set e10 = state_attr(petrol_station.entity_id, 'E10') if state_attr(petrol_station.entity_id, 'E10') is defined else None %}
+              {% if e10 is not none %}
+                {% if e10 < lowest_current_fuel.value %}
+                  {% set lowest_current_fuel.value = e10 %}
+                  {% set lowest_current_fuel.entity_id = petrol_station.entity_id %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            {{ lowest_current_fuel.entity_id }}
+          value: >
+            {{ state_attr(this.attributes.entity_id, 'E10') | float / 100 }}
+          latitude: >
+            {{ state_attr(this.attributes.entity_id, 'latitude') }}
+          longitude: >
+            {{ state_attr(this.attributes.entity_id, 'longitude') }}
+          location: >
+            {{ state_attr(this.attributes.entity_id, 'friendly_name') }}
+        state: "{{ this.attributes.value  | default('0') }}"

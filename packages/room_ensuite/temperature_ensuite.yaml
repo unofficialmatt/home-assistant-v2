@@ -1,0 +1,12 @@
+sensor:
+  - platform: template
+    sensors:
+      en_suite_temperature:
+        friendly_name: "En Suite Temperature"
+        value_template: "{{ state_attr('climate.en_suite', 'current_temperature') }}"
+        unit_of_measurement: "°C"
+      en_suite_target_temperature:
+        friendly_name: "En Suite Target Temperature"
+        value_template: "{{ state_attr('climate.en_suite', 'temperature') }}"
+        unit_of_measurement: "°C"
+# TODO: When the room becomes functional, turn the radiator on in the same vein as the family bathroom

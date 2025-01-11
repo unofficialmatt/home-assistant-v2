@@ -1,5 +1,7 @@
+!*.yaml
+!*.md
+
 # Exclude hidden files
-._*
 .*
 
 ###### INCLUDE

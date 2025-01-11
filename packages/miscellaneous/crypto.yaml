@@ -1,0 +1,6 @@
+sensor:
+  - platform: bitcoin
+    currency: GBP
+    display_options:
+      - exchangerate
+      # - market_price_usd

@@ -1,0 +1,397 @@
+# todo: add man_cave_all
+
+scene:
+  # TODO: ADD MAN CAVE CDS, but there was a werd browser issue
+  - name: Man Cave Read
+    entities:
+      light.man_cave_colour:
+        state: "on"
+        xy_color: [0.505, 0.385]
+        brightness: 255
+        effect: None
+      light.man_cave_lamp:
+        state: "on"
+        brightness: 255
+        effect: None
+      light.man_cave_cds:
+        state: "off"
+  - name: Man Cave Rest
+    entities:
+      light.man_cave_colour:
+        state: "on"
+        xy_color: [0.561, 0.4042]
+        brightness: 90
+        effect: None
+      light.man_cave_lamp:
+        state: "on"
+        brightness: 90
+        effect: None
+      light.man_cave_cds:
+        state: "off"
+  - name: Man Cave Nightlight
+    entities:
+      light.man_cave_colour:
+        state: "on"
+        xy_color: [0.561, 0.4042]
+        brightness: 1
+        effect: None
+      light.man_cave_lamp:
+        state: "on"
+        brightness: 1
+        effect: None
+      light.man_cave_cds:
+        state: "off"
+  - name: Man Cave Dreamy Dusk
+    entities:
+      light.man_cave_colour:
+        state: "on"
+        xy_color: [0.5493, 0.3702]
+        brightness: 128
+        effect: None
+      light.man_cave_lamp:
+        state: "on"
+        brightness: 20
+        effect: None
+      light.man_cave_cds:
+        state: "off"
+      # light.man_cave_cds:
+      #   state: "on"
+      #   xy_color: [0.232, 0.084]
+      #   brightness: 30
+  - name: Man Cave Nebula
+    entities:
+      light.man_cave_colour:
+        state: "on"
+        xy_color: [0.2712, 0.1723]
+        brightness: 61
+        effect: None
+      light.man_cave_lamp:
+        state: "on"
+        brightness: 20
+        effect: None
+      light.man_cave_cds:
+        state: "off"
+  - name: Man Cave Candlelight
+    entities:
+      light.man_cave_colour:
+        state: "on"
+        effect: candle
+      light.man_cave_lamp:
+        state: "on"
+        effect: candle
+      light.man_cave_cds:
+        state: "off"
+
+input_select:
+  man_cave_light_mode:
+    name: Man Cave Scene Selector
+    options:
+      - Adaptive
+      - Read
+      - Rest
+      - Nightlight
+      - Dreamy Dusk
+      - Nebula
+      - Candlelight
+    initial: Adaptive
+    icon: mdi:lightbulb
+
+automation:
+  ##############
+  ## PRESENCE ##
+  ##############
+
+  - alias: Man Cave - Turn On Lights on Motion Detection
+    id: "man_cave_lights_on_motion"
+    description: "Turns on Man Cave Lights when motion is detected and it's dark outside"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.man_cave_pir_sensor
+        to: "on"
+    condition:
+      condition: and
+      conditions:
+        # 1. The room is either unoccupied or the mmwave sensor was triggered in the last 15 seconds. This is to avoid the cat triggering the lights as best as possible.
+        - condition: template
+          value_template: >
+            {{ is_state('binary_sensor.man_cave_occupancy', 'off') or
+               (is_state('binary_sensor.man_cave_occupancy', 'on') and
+               (as_timestamp(now()) - as_timestamp(states.binary_sensor.man_cave_mmwave_sensor.last_changed)) < 15) }}
+        # 2. It's dark outside
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          below: 35
+        # 3. The lights are off
+        - condition: state
+          entity_id: light.man_cave
+          state: "off"
+        # 4. Sleep mode is currently set to Off
+        - condition: template
+          value_template: "{{ float(states('input_number.man_cave_bedtime_status')) == 0.0 }}"
+    action:
+      # TODO: Set a sleep mode scene
+      - action: light.turn_on
+        entity_id: light.man_cave
+
+  - alias: Man Cave - Turn On Lights When Dark and Occupied
+    id: "man_cave_lights_on_when_occupied"
+    description: Turns on Man Cave Lights when it is consistently dark and the room is already occupied
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: numeric_state
+        entity_id: sensor.sunlight_pct
+        below: 35
+        for:
+          minutes: 5
+    condition:
+      condition: and
+      conditions:
+        # 1. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.man_cave_occupancy
+          state: "on"
+        # 2. Lights are off
+        - condition: state
+          entity_id: light.man_cave
+          state: "off"
+        # 3. It's dark outside
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          below: 35
+        # 4. Sleep mode is currently set to Off
+        - condition: template
+          value_template: "{{ float(states('input_number.man_cave_bedtime_status')) == 0.0 }}"
+    action:
+      # TODO: Set a sleep mode scene
+      - action: light.turn_on
+        entity_id: light.man_cave
+
+  - alias: Man Cave - Turn Off Lights When Light Enough
+    id: "man_cave_lights_off_when_light_enough"
+    description: Turns off Man Cave Lights when it's consistently light enough
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: numeric_state
+        entity_id: sensor.sunlight_pct
+        above: 35
+        for:
+          minutes: 5
+    condition:
+      condition: and
+      conditions:
+        # 1. The lights are on
+        - condition: state
+          entity_id: light.man_cave
+          state: "on"
+        # 2. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.man_cave_occupancy
+          state: "on"
+        # 3. The sunlight is above the threshold
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          above: 35
+    action:
+      - action: light.turn_off
+        entity_id: light.man_cave_cds
+        data:
+          transition: 5
+      - action: light.turn_off
+        entity_id: light.man_cave
+        data:
+          transition: 5
+
+  - alias: Man Cave - turn off lights when unoccupied
+    id: "man_cave_lights_off_when_unoccupied"
+    description: Turns off Man Cave Lights when occupancy is no longer detected
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.man_cave_occupancy
+        to: "off"
+        for:
+          minutes: 5
+    condition:
+      # 1. Sleep mode is currently set to Off
+      - condition: template
+        value_template: "{{ float(states('input_number.man_cave_bedtime_status')) == 0.0 }}"
+    action:
+      - action: light.turn_off
+        entity_id: light.man_cave_cds
+        data:
+          transition: 5
+      - action: light.turn_off
+        entity_id: light.man_cave
+        data:
+          transition: 5
+
+  ##############
+  ##  DIMMER  ##
+  ##############
+
+  - alias: Man Cave - Scene Cycle
+    id: "1701536104"
+    description: "Cycles through Man Cave Scenes when Hue Switch 4 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "man_cave_dimmer_button"
+          type: short_release
+          subtype: 4
+    action:
+      - action: input_select.select_next
+        entity_id: input_select.man_cave_light_mode
+
+  - alias: Man Cave - Force Adaptive Lighting
+    id: "1701536104b"
+    description: "Forces Adaptive Lighting in Man Cave when Hue Switch 4 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "man_cave_dimmer_button"
+          type: long_release
+          subtype: 4
+    action:
+      - action: input_select.select_option
+        entity_id: input_select.man_cave_light_mode
+        data:
+          option: Adaptive
+
+  - alias: Man Cave - Scene Set
+    id: "1701536104c"
+    description: "Sets the Man Cave Scene when the Input Select is changed"
+    trigger:
+      - platform: state
+        entity_id: input_select.man_cave_light_mode
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_select.man_cave_light_mode
+                state: "Adaptive"
+            sequence:
+              - action: adaptive_lighting.set_manual_control
+                data:
+                  entity_id: switch.adaptive_lighting_man_cave
+                  manual_control: false
+
+          - conditions:
+              - condition: template
+                value_template: "{{ not is_state('input_select.man_cave_light_mode', 'Adaptive') }}"
+            sequence:
+              - action: scene.turn_on
+                data_template:
+                  entity_id: >
+                    scene.man_cave_{{ states('input_select.man_cave_light_mode') | lower | replace(' ', '_') }}
+
+  - alias: Man Cave - Light Brightness up 5%
+    id: "1701536105"
+    description: "Turns Man Cave Lights brightness up 5% when Hue Switch 2 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "man_cave_dimmer_button"
+          type: short_release
+          subtype: 2
+    action:
+      - action: light.turn_on
+        entity_id: light.man_cave
+        data:
+          brightness_step_pct: 5
+
+  - alias: Man Cave - Light Brightness up continued
+    id: "1701536105b"
+    description: "Turns Man Cave Lights brightness up 10% incrementally when Hue Switch 2 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "man_cave_dimmer_button"
+          type: repeat
+          subtype: 2
+    action:
+      - action: light.turn_on
+        entity_id: light.man_cave
+        data:
+          brightness_step_pct: 15
+
+  - alias: Man Cave - Light Brightness down 5%
+    id: "1701536106"
+    description: "Turns Man Cave Lights brightness down 5% when Hue Switch 3 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "man_cave_dimmer_button"
+          type: short_release
+          subtype: 3
+    condition:
+      - condition: state
+        entity_id: light.man_cave
+        state: "on"
+    action:
+      - action: light.turn_on
+        entity_id: light.man_cave
+        data:
+          brightness_step_pct: -5
+
+  - alias: Man Cave - Light Brightness down continued
+    id: "1701536106b"
+    description: "Turns Man Cave Lights brightness down 10% incrementally when Hue Switch 3 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "man_cave_dimmer_button"
+          type: repeat
+          subtype: 3
+    condition:
+      - condition: state
+        entity_id: light.man_cave
+        state: "on"
+    action:
+      - action: light.turn_on
+        entity_id: light.man_cave
+        data:
+          brightness_step_pct: -15
+
+  - alias: Man Cave - Toggle lights
+    id: "1701536107"
+    description: "Toggle Man Cave Lights when Hue Switch 1 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "man_cave_dimmer_button"
+          type: short_release
+          subtype: 1
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "man_cave_dimmer_button"
+          type: long_release
+          subtype: 1
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: light.man_cave
+                state: "on"
+            sequence:
+              - action: light.turn_off
+                entity_id: light.man_cave
+                data:
+                  transition: 2
+          - conditions:
+              - condition: state
+                entity_id: light.man_cave
+                state: "off"
+            sequence:
+              - action: light.turn_on
+                entity_id: light.man_cave
+                data:
+                  transition: 2

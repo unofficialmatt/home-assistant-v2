@@ -1,0 +1,189 @@
+# todo: refactor alarm clock so it calls this service instead, and anywhere else that needs it.
+spotcast:
+  sp_dc: !secret spotify_sp_dc
+  sp_key: !secret spotify_sp_key
+
+media_player:
+  - platform: group
+    name: "Google Home Speakers"
+    entities:
+      - media_player.kitchen_speaker
+      - media_player.lounge_speaker
+      - media_player.master_bedroom_wifi
+
+# TODO: Podcasts see https://github.com/fondberg/spotcast?tab=readme-ov-file#start-podcast-playback
+# TODO: Artists Radio
+
+input_select:
+  spotify_playlists:
+    name: Spotify Playlists
+    options:
+      - "- Select Playlist -"
+      - Daily Mix
+      - Discover New Music
+      - Jazz
+      # - Pop
+      # - Rock and Indie
+      # - Punk and Emo
+      # - Hardcore and Metal
+      # - Blues
+      # - Dance and Electronic
+      # - Folk and Acoustic
+      # - Xmas
+      # - Classical
+      # - "Lo-Fi and Chill"
+      - Synthwave and Retro
+      - Musicals
+    initial: "- Select Playlist -"
+    icon: mdi:playlist-music
+
+automation:
+  - alias: Spotify - Playlist Selector Reset
+    id: "spotify_playlist_selector_reset"
+    description: "Reset the Spotify Playlist input_select when spotify stops playing"
+    trigger:
+      - platform: state
+        entity_id: media_player.spotify
+        to: "idle"
+    action:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.spotify_playlists
+          option: "- Select Playlist -"
+
+  - alias: Spotify - Play Playlist
+    id: "spotify_play_playlist"
+    description: "Play a Spotify Playlist on the currently active device when the input_select changes"
+    trigger:
+      - platform: state
+        entity_id: input_select.spotify_playlists
+    condition:
+      condition: and
+      conditions:
+        # Don't trigger if the input_select is set to the default value
+        - condition: template
+          value_template: "{{ trigger.to_state.state != '- Select Playlist -' }}"
+        # Only if spotify is not idle
+        - condition: template
+          value_template: "{{ states('media_player.spotify') != 'idle' }}"
+        # Only if spotify is not paused
+        - condition: template
+          value_template: "{{ states('media_player.spotify') != 'paused' }}"
+    action:
+      - service: script.spotify_play_playlist
+        data:
+          playlist: "{{ trigger.to_state.state }}"
+
+script:
+  spotify_takeover:
+    alias: "Takes over Spotify playback on a specific device"
+    sequence:
+      - service: spotcast.start
+        data_template:
+          device_name: "{{ device_name }}"
+          force_playback: true
+
+  spotify_play_random_playlist:
+    alias: "Pick a Random Spotify Playlist"
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.spotify_playlists
+          option: >
+            {% set playlists = state_attr('input_select.spotify_playlists','options') %}
+            {% set playlists = playlists | selectattr('strip') | list %}
+            {% set playlists = playlists[1:] %}
+            {% set random_playlist = playlists | random %}
+            {{ random_playlist }}
+
+  spotify_play_playlist:
+    alias: Spotify - Play Playlist
+    description: "Play a Spotify playlist on a specific device or the currently active device"
+    fields:
+      playlist:
+        description: "Name of the playlist to play (must match input_select options)"
+        example: "Discover Weekly"
+        required: false
+      device_name:
+        description: "Optional device name to play on"
+        example: "Master Bedroom"
+        required: false
+    sequence:
+      - service: spotcast.start
+        data_template:
+          device_name: >
+            {% if device_name %}
+              {{ device_name }}
+            {% elif state_attr('media_player.spotify', 'source') %}
+              {{ state_attr('media_player.spotify', 'source') }}
+            {% endif %}
+          uri: >
+            {% set playlist = playlist or states('input_select.spotify_playlists') %}
+            {% set playlist_map = {
+              'Daily Mix': [
+                'spotify:playlist:37i9dQZF1E39Ps1K88u1ff',
+                'spotify:playlist:37i9dQZF1E35YKW6GUFybi',
+                'spotify:playlist:37i9dQZF1E361Hv88hegzr',
+                'spotify:playlist:37i9dQZF1E35HFSOhxdVZl',
+                'spotify:playlist:37i9dQZF1E34SkVHjRrcrO',
+                'spotify:playlist:37i9dQZF1E37vMthaZwm3G'
+              ],
+              'Discover New Music': [
+                'spotify:playlist:37i9dQZEVXcHsW4pFj4T0C',
+                'spotify:playlist:37i9dQZEVXbtkYqvjNCAlq',
+                'spotify:playlist:37i9dQZF1DX4W3aJJYCDfV',
+                'spotify:playlist:37i9dQZF1DWSV5Sri2Qa60',
+                'spotify:playlist:7nnyvG2CHYgiCOrUlh67v7',
+                'spotify:playlist:37i9dQZF1DX2Z1pVUBGGZs'
+              ],
+              'Pop': [],
+              'Rock and Indie': [],
+              'Punk and Emo': [],
+              'Hardcore and Metal': [],
+              'Jazz': [
+                'spotify:playlist:37i9dQZF1DWSGaMpjluQpy',
+                'spotify:playlist:37i9dQZF1DX52ln8eMkne9',
+                'spotify:playlist:37i9dQZF1DX2vYju3i0lNX',
+                'spotify:playlist:37i9dQZF1DXdk2DZvqpqJY',
+                'spotify:playlist:37i9dQZF1DX6lttj7ulLd6',
+                'spotify:playlist:37i9dQZF1DXbehaqJzJXqw',
+              ],
+              'Classical': [
+                'spotify:playlist:37i9dQZF1DWVFeEut75IAL',
+                'spotify:playlist:27Zm1P410dPfedsdoO9fqm',
+                'spotify:playlist:5woQPFTaDW4jOvMsV8aCBj'
+              ],
+              'Lo-Fi and Chill': [],
+              'Blues': [],
+              'Dance and Electronic': [],
+              'Folk and Acoustic': [],
+              'Xmas': [],
+              'Synthwave and Retro': [
+                'spotify:playlist:37i9dQZF1DX8V4BE7YIpvE',
+                'spotify:playlist:37i9dQZF1EIhdusJHpCNoA',
+                'spotify:playlist:7dCEN3pOke0Nv1Iz62VBnJ',
+                'spotify:playlist:1YIe34rcmLjCYpY9wJoM2p',
+                'spotify:playlist:7gh5NAVKOqUZ8fPrM5NvXh',
+                'spotify:playlist:3ebHKSjHujS4Tyt2KKP97R'
+              ],
+              'Musicals': [
+                'spotify:playlist:6RUTd1lX6c1kF0fXML676Z',
+                'spotify:playlist:4QgUr64GS0ZKfFTg1fXCaO',
+                'spotify:playlist:2Mh2vISWmZVmfJUUQAFJIS',
+                'spotify:playlist:37i9dQZF1EIfGshcFHL3yT',
+                'spotify:playlist:37i9dQZF1EIgbtUZZDSYGZ',
+                'spotify:playlist:0Xs1iuTtAJYsVYOT4UeZHw',
+                'spotify:playlist:37i9dQZF1EIez1SXYeBsvt',
+                'spotify:playlist:37i9dQZF1EIez1SXYeBsvt',
+              ]
+            } %}
+            {% set selected_playlist = playlist_map[playlist] %}
+            {% if selected_playlist is string %}
+              {{ selected_playlist }}
+            {% else %}
+              {{ selected_playlist | random }}
+            {% endif %}
+          force_playback: true
+          random_song: true
+          shuffle: true
+          repeat: true

@@ -1,0 +1,18 @@
+automation:
+  - alias: Doorbell Auto Video Download
+    id: "aarlo_download_front_door_videos"
+    description: Fires a python script to download the latest video from the front door camera
+    trigger:
+      - platform: state
+        entity_id: sensor.aarlo_last_front_door
+    action:
+      # Save the video to the archive
+      - service: shell_command.download_arlo
+        data_template:
+          video_url: "{{ state_attr('sensor.aarlo_last_front_door', 'video_url') }}"
+      # todo: save the jpeg down and roast it
+    mode: single
+
+shell_command:
+  download_arlo: "python3 /aarlo/download.py {{ video_url }}"
+# todo: use alarm mode on arlo when home status changes. Not sure what this does.

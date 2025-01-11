@@ -1,0 +1,60 @@
+binary_sensor:
+  - platform: bayesian
+    name: "Toilet Occupancy"
+    prior: 0.1 # Pretty low chance the toilet is occupied at any given moment
+    device_class: occupancy
+    probability_threshold: 0.1
+    observations:
+      # 50/50 chance that if the door is closed someone is in there
+      - platform: state
+        to_state: "off"
+        entity_id: binary_sensor.downstairs_toilet_door
+        prob_given_true: 0.5
+        prob_given_false: 0.5
+      # If someone has triggered motion in the last 3 minutes, the room is likely occupied
+      - platform: state
+        to_state: "on"
+        entity_id: binary_sensor.toilet_motion_sensor_triggered
+        prob_given_true: 0.9
+        prob_given_false: 0.1
+
+  - platform: template
+    sensors:
+      toilet_motion_sensor_triggered:
+        friendly_name: "Toilet Motion Sensor Triggered"
+        value_template: "{{ is_state('binary_sensor.toilet_motion', 'on') }}"
+        device_class: occupancy
+        delay_off: "00:03:00"
+
+automation:
+  - alias: Downstairs Toilet - turn on lights
+    id: "downstairs_toilet_turn_on_lights"
+    description: Turns on Downstairs Toilet Lights when motion is detected
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.toilet_occupancy
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: light.downstairs_toilet
+        state: "off"
+    action:
+      - action: light.turn_on
+        entity_id: light.downstairs_toilet
+
+  - alias: Downstairs Toilet - turn off lights
+    id: "downstairs_toilet_turn_off_lights"
+    description: Turns off Downstairs Toilet Lights when occupancy is no longer detected
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.toilet_occupancy
+        to: "off"
+    condition:
+      - condition: state
+        entity_id: light.downstairs_toilet
+        state: "on"
+    action:
+      - action: light.turn_off
+        entity_id: light.downstairs_toilet
+        data:
+          transition: 5

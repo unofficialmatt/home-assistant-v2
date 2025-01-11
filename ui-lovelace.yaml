@@ -1,10 +1,12 @@
 button_card_templates: !include_dir_merge_named "interface/cards"
+decluttering_templates: !include_dir_merge_named "interface/decluttering_templates"
 
 title: Canoe House
 
-swipe_nav:
-  animate: fade
-  prevent_default: true
-  swipe_amount: 10
+# @See https://github.com/maykar/kiosk-mode
+kiosk_mode:
+  mobile_settings:
+    hide_header: true
+    # hide_sidebar: true
 
 views: !include_dir_merge_list "interface/views/"

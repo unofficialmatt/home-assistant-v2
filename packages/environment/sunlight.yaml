@@ -1,0 +1,57 @@
+sun:
+
+# TODO: DECIDE WHICH PIRATE WEATHER SENSORS TO KEEP
+sensor:
+  ## COMPUTED LIGHT LEVEL SENSOR
+  # This sensor calculates the estimated sunlight percentage based on cloud coverage, solar radiation, and sun elevation.
+  # @see Home Assistant forum reference: https://community.home-assistant.io/t/virtual-light-sensor/31975/16
+  # This sensor estimates sunlight percentage based on cloud coverage, weather condition, and sun elevation.
+  - platform: template
+    sensors:
+      sunlight_pct:
+        friendly_name: "Percentage of Sunlight"
+        icon_template: mdi:brightness-auto
+        unit_of_measurement: "%"
+        value_template: |
+          {# Get the sun's current elevation from sun.sun attribute #}
+          {%- set elevation = state_attr('sun.sun', 'elevation') | float %}
+
+          {# Get the cloud coverage from Pirate Weather #}
+          {%- set cloud_coverage = states('sensor.pirateweather_cloud_coverage') | float %}
+
+          {# Get the current weather condition #}
+          {%- set current_condition = states("weather.pirateweather") | lower %}
+
+          {# Map specific weather conditions to light intensity factors #}
+          {%- set condition_factors = {
+            "10000": ["clear", "clear-night", "sunny", "windy", "exceptional"],
+            "7500": ["partlycloudy", "windy-variant"],
+            "2500": ["cloudy"],
+            "500": ["fog", "rainy", "pouring", "snowy", "snowy-rainy"],
+            "50": ["hail", "lightning", "lightning-rainy"]
+          } %}
+
+          {# Match the condition to a light factor, defaulting to 0 if not found #}
+          {%- set illuminance_pct = (
+            condition_factors | selectattr("value", "contains", current_condition) | map("attr", "key") | first | default(0) | int
+          ) / 100 %}
+
+          {# Calculate cloud factor based on cloud coverage #}
+          {%- set adjusted_clouds = [cloud_coverage, 0.00000001] | max %}
+          {%- set cloud_factor = 1 - (0.75 * (adjusted_clouds / 100) ** 3) %}
+
+          {# Define sun elevation range #}
+          {%- set min_elevation = -6 %}
+          {%- set max_elevation = 62.59 %}
+
+          {# Normalize sun elevation to a percentage #}
+          {%- set adjusted_elevation = elevation - min_elevation %}
+          {%- set adjusted_elevation = [adjusted_elevation, 0] | max %}
+          {%- set adjusted_elevation = [adjusted_elevation, max_elevation - min_elevation] | min %}
+          {%- set adjusted_elevation = adjusted_elevation / (max_elevation - min_elevation) * 100 %}
+
+          {# Calculate final sunlight percentage #}
+          {%- set result = adjusted_elevation * cloud_factor %}
+          {%- set result = [result, 100] | min %}
+
+          {{ result | round }}

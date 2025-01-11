@@ -1,0 +1,202 @@
+# TODO: A SCENE FOR NIGHT TIME WHERE ONLY SHELVES ARE ON
+light:
+  - platform: group
+    name: Kitchen All
+    entities:
+      - light.kitchen
+      - light.kitchen_shelves_light
+
+automation:
+  ##############
+  ## PRESENCE ##
+  ##############
+  - alias: Kitchen - Turn On Lights on Motion Detection
+    id: "kitchen_lights_on_motion"
+    description: "Turns on Kitchen Lights when motion is detected and it's dark outside"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kitchen_pir_sensor
+        to: "on"
+    condition:
+      condition: and
+      conditions:
+        # 1. The room is either unoccupied or the mmwave sensor was triggered in the last 15 seconds. This is to avoid the cat triggering the lights as best as possible.
+        - condition: template
+          value_template: >
+            {{ is_state('binary_sensor.kitchen_occupancy', 'off') or
+               (is_state('binary_sensor.kitchen_occupancy', 'on') and
+               (as_timestamp(now()) - as_timestamp(states.binary_sensor.kitchen_mmwave_sensor.last_changed)) < 15) }}
+        # 2. It's dark outside
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          below: 35
+        # 3. The lights are off
+        - condition: state
+          entity_id: light.kitchen_all
+          state: "off"
+    action:
+      - action: light.turn_on
+        entity_id: light.kitchen_all
+
+  - alias: Kitchen - Turn On Lights When Dark and Occupied
+    id: "kitchen_lights_on_when_occupied"
+    description: Turns on Kitchen Lights when it is consistently dark and the room is already occupied
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: numeric_state
+        entity_id: sensor.sunlight_pct
+        below: 35
+        for:
+          minutes: 5
+    condition:
+      condition: and
+      conditions:
+        # 1. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.kitchen_occupancy
+          state: "on"
+        # 2. Lights are off
+        - condition: state
+          entity_id: light.kitchen_all
+          state: "off"
+        # 3. It's dark outside
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          below: 35
+    action:
+      - action: light.turn_on
+        entity_id: light.kitchen_all
+        # todo: at night just turn on the shelf lights?
+
+  - alias: Kitchen - Turn Off Lights When Light Enough
+    id: "kitchen_lights_off_when_light_enough"
+    description: Turns off Kitchen Lights when it's consistently light enough
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: numeric_state
+        entity_id: sensor.sunlight_pct
+        above: 30
+        for:
+          minutes: 5
+    condition:
+      condition: and
+      conditions:
+        # 1. The lights are on
+        - condition: state
+          entity_id: light.kitchen_all
+          state: "on"
+        # 2. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.kitchen_occupancy
+          state: "on"
+        # 3. The sunlight is above the threshold
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          above: 30
+    action:
+      - action: light.turn_off
+        entity_id: light.kitchen_all
+        data:
+          transition: 5
+
+  - alias: Kitchen - turn off lights when unoccupied
+    id: "kitchen_lights_off_when_unoccupied"
+    description: Turns off Kitchen Lights when occupancy is no longer detected
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kitchen_occupancy
+        to: "off"
+        for:
+          minutes: 2
+    action:
+      - action: light.turn_off
+        entity_id: light.kitchen_all
+        data:
+          transition: 5
+
+  ##############
+  ##  DIMMER  ##
+  ##############
+  - alias: Dim Kitchen Lights - with Dimmer
+    id: "kitchen_lights_dim"
+    description: "Dims the Kitchen Lights by 15% when the dimmer is rotated to the left"
+    trigger:
+      - platform: event
+        event_type: zha_event
+        event_data:
+          device_id: "12fda0d66b249fedb713d2f24ce43a9c"
+          command: "rotate_type"
+          params:
+            rotate_type: 1
+    # Only dim the lights if they are on
+    condition:
+      - condition: state
+        entity_id: light.kitchen_all
+        state: "on"
+    action:
+      - action: light.turn_on
+        entity_id: light.kitchen_all
+        data:
+          brightness_step_pct: -15
+
+  - alias: Brighten Kitchen Lights - with Dimmer
+    id: "kitchen_lights_brighten"
+    description: "Brightens the Kitchen Lights by 15% when the dimmer is rotated to the right"
+    trigger:
+      - platform: event
+        event_type: zha_event
+        event_data:
+          device_id: "12fda0d66b249fedb713d2f24ce43a9c"
+          command: "rotate_type"
+          params:
+            rotate_type: 0
+    action:
+      - action: light.turn_on
+        entity_id: light.kitchen_all
+        data:
+          brightness_step_pct: 15
+
+  - alias: Turn On Kitchen Lights - with Dimmer
+    id: "kitchen_lights_on"
+    description: "Dim the Kitchen Lights to 100% when the dimmer is double tapped"
+    trigger:
+      - platform: event
+        event_type: zha_event
+        event_data:
+          device_id: "12fda0d66b249fedb713d2f24ce43a9c"
+          command: "on"
+    action:
+      - action: light.turn_on
+        entity_id: light.kitchen_all
+        data:
+          brightness_pct: 100
+      - action: switch.turn_off
+        entity_id: switch.adaptive_lighting_bathroom
+
+  - alias: Toggle Kitchen Lights - with Dimmer
+    id: "kitchen_lights_toggle"
+    description: "Toggle the Kitchen Lights on/off depending on their current state when the dimmer is tapped"
+    trigger:
+      - platform: event
+        event_type: zha_event
+        event_data:
+          device_id: "12fda0d66b249fedb713d2f24ce43a9c"
+          command: toggle
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: light.kitchen_all
+                state: "on"
+            sequence:
+              - action: light.turn_off
+                entity_id: light.kitchen_all
+          - conditions:
+              - condition: state
+                entity_id: light.kitchen_all
+                state: "off"
+            sequence:
+              - action: light.turn_on
+                entity_id: light.kitchen_all

@@ -1,89 +1,168 @@
 # lovelace_gen
-{% set lights = [ 'guest_bedroom_sovereign','guest_bedroom_opihr' ] %}
-{% set batteries = [ 'guest_bedroom_radiator_battery_level', 'guest_bedroom_switch_battery' ] %}
-
-- title: Guest Bedroom
-  path: guest-bedroom
-  icon: mdi:bed-double
-
-  cards:
-
-    - type: horizontal-stack
-      cards:
-        - !include ../chips/chip_back.yaml
-        - type: 'custom:button-card'
-          template: chip_occupancy
-          entity: binary_sensor.guest_bedroom_occupancy
-        #- !include ../chips/presence.yaml
-        #- !include ../chips/wifi.yaml
-        # - !include ../chips/spotify.yaml
-        # - !include ../chips/temperature.yaml
-        # - !include ../chips/chance_of_rain.yaml
-
-    - type: vertical-stack
-      cards:
-
-        - type: custom:button-card
-          template: card_input_boolean
-          entity: input_boolean.guests_staying_bedroom_2
-          variables:
-            ulm_card_input_boolean_name: Guest's Staying?
-            ulm_card_input_boolean_icon: mdi:account
-
-        - type: custom:button-card
-          template: card_title
-          name: "Guest Bedroom"
-          label: "Lights"
-
-        - type: grid
-          columns: 2
-          square: false
-          cards:
-
-          {% for x in lights %}
-          - type: custom:button-card
-            template: card_light
-            entity: light.{{ x }}
-            variables:
-              ulm_card_light_enable_slider: true
-              ulm_card_light_enable_color: true
-              #ulm_card_light_force_background_color: true
-              ulm_card_light_enable_collapse: true
-              ulm_card_light_enable_popup: true
-          {% endfor %}
-
-    - type: vertical-stack
-      cards:
-
-        - type: custom:button-card
-          template: card_title
-          label: Heating
-
-        - type: "custom:button-card"
-          template: card_climate
-          entity: climate.guest_bedroom
-          variables:
-            ulm_card_thermostat_name: "Radiator"
+{% set lights = { 'Ceiling': 'guest_bedroom_ceiling', 'Desk Lamp': 'sarahs_office_lamp', 'Bed Left': 'guest_bedroom_bed_left', 'Bed Right': 'guest_bedroom_bed_right' } %}
+{% set batteries = {'Dimmer': 'guest_bedroom_dimmer_battery','Radiator': 'guest_bedroom_radiator_battery_level' } %}
 
 # TODO: Add a Google Home Mini to this room?
 
+- title: Guest Bedroom
+  path: guest_bedroom
+  type: custom:grid-layout
+  icon: mdi:bed-double
+  layout:
+    grid-template-columns: 1fr 1fr 1fr
+    grid-template-rows: auto
+    grid-gap: 12px
+    margin: 20px
+    grid-template-areas: |
+      "header chips chips"
+      "col1 col2 col3"
+    mediaquery:
+      "(max-width: 500px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "chips chips"
+          "header header"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 900px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col1"
+          "col2 col2"
+          "col3 col3"
+      "(max-width: 1200px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 col3"
+          "col2 col3"
+          "col2 ."
+  cards:
+
+    # GRID AREA HEADER
+    - type: custom:decluttering-card
+      template: mushroom_view_header
+      view_layout:
+        grid-area: header
+      variables:
+        - room: Guest Bedroom
+
+    # GRID AREA CHIPS
+    - type: custom:decluttering-card
+      template: mushroom_chips
+      view_layout:
+        grid-area: chips
+      variables:
+        - occupancy_sensor: binary_sensor.guest_bedroom_occupancy
+
+    # GRID AREA COL1
     - type: vertical-stack
+      view_layout:
+        grid-area: col1
       cards:
 
-        - type: custom:button-card
-          template: card_title
-          label: Batteries
+        - type: heading
+          heading: Lights
+          icon: mdi:lightbulb-on-outline
+          badges:
+            - type: entity
+              entity: light.guest_bedroom
+              tap_action:
+                action: toggle
+              show_state: true
+              color: state
+
+
+        - type: custom:decluttering-card
+          template: mushroom_scene_select
+          variables:
+            - room: guest_bedroom
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+            {% for key, val in lights.items() %}
+            - type: custom:mushroom-light-card
+              entity: light.{{ val }}
+              name: "{{ key }}"
+              use_light_color: true
+              show_brightness_control: true
+              # show_color_temp_control: true
+              # show_color_control: true
+              collapsible_controls: true
+            {% endfor %}
+
+    # GRID AREA COL2
+    - type: vertical-stack
+      view_layout:
+        grid-area: col2
+      cards:
+
+        - type: heading
+          heading: Heating
+          icon: mdi:radiator
+          badges:
+            - type: entity
+              entity: sensor.guest_bedroom_temperature
+              show_state: true
+              show_icon: false
+
+        - type: custom:mushroom-climate-card
+          entity: climate.guest_bedroom
+          name: Radiator
+          icon: mdi:thermometer
+          show_temperature_control: true
+          collapsible_controls: true
+          tap_action:
+            action: more-info
+
+        - type: heading
+          heading: Settings
+          icon: mdi:cog-outline
+
+        - type: custom:decluttering-card
+          template: mushroom_boolean
+          variables:
+            - entity_id: input_boolean.guests_staying_bedroom_2
+            - title: Guests Staying?
+            - icon: mdi:account
+
+    # GRID AREA COL3
+    - type: vertical-stack
+      view_layout:
+        grid-area: col3
+      cards:
+
+        - type: heading
+          heading: Sensors
+          icon: mdi:graph
+
+        - type: heading
+          heading: Environment
+          heading_style: subtitle
+
+        - type: custom:decluttering-card
+          template: mushroom_graph
+          variables:
+            - entity_one: sensor.guest_bedroom_temperature
+            - entity_one_name: Temperature
+
+        - type: heading
+          heading: Batteries
+          heading_style: subtitle
 
         - type: grid
           columns: 2
           square: false
           cards:
 
-            {% for x in batteries %}
-            - type: custom:button-card
-              template: card_battery
-              entity: sensor.{{ x }}
+            {% for key, val in batteries.items() %}
+            - type: custom:decluttering-card
+              template: mushroom_battery
               variables:
-                ulm_card_battery_battery_level_danger: 10
-                ulm_card_battery_battery_level_warning: 30
+                - entity_id: sensor.{{ val }}
+                - title: "{{ key }}"
             {% endfor %}

@@ -1,0 +1,217 @@
+# lovelace_gen
+
+- title: Entities Requiring Attention
+  path: entities_requiring_attention
+  icon: mdi:alert
+  type: custom:grid-layout
+  visible: false
+  layout:
+    grid-template-columns: 1fr 1fr 1fr
+    grid-template-rows: auto
+    grid-gap: 12px
+    margin: 20px
+    grid-template-areas: |
+      "header header chips"
+      ". col1 ."
+    mediaquery:
+      "(max-width: 500px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "chips chips"
+          "header header"
+          "col1 col1"
+      "(max-width: 1200px)":
+        grid-template-columns: 1fr 1fr
+        grid-template-areas: |
+          "header chips"
+          "col1 ."
+
+  cards:
+    - type: vertical-stack
+      cards:
+        - type: horizontal-stack
+          cards:
+            - type: custom:mushroom-title-card
+              title: Bambugaloo
+              alignment: start
+            - type: custom:mod-card
+              card:
+                type: custom:mushroom-chips-card
+                chips:
+                  - type: entity
+                    entity: button.bambugaloo_stop_printing
+                    icon: mdi:stop
+                    content_info: false
+                  - type: entity
+                    entity: button.bambugaloo_pause_printing
+                    icon: mdi:pause
+                    content_info: false
+                  - type: entity
+                    entity: button.bambugaloo_resume_printing
+                    icon: mdi:play
+                    content_info: false
+                card_mod:
+                  style: |
+                    ha-card {
+                      display: flex;
+                      justify-content: end;
+                      align-items: center;
+                      height: 80px;
+                    }
+        - type: custom:mod-card
+          card:
+            camera_view: live
+            type: picture-glance
+            entities: []
+            camera_image: camera.bambugaloo_camera
+
+        - type: custom:mod-card
+          card_mod:
+            style:
+              hui-horizontal-stack-card $: |
+                div#root > :first-child > * {
+                  width: 20%;
+                  flex: auto;
+                }
+                div#root > :last-child > * {
+                  width: 80%;
+                  flex: auto;
+                }
+          card:
+            type: horizontal-stack
+            cards:
+              - type: custom:mushroom-chips-card
+                chips:
+                  - type: template
+                    entity: binary_sensor.bambugaloo_online
+                    content: EXT.
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: none !important;
+                          border: none;
+                          font-size: 4rem !important;
+                        }
+              - type: custom:mushroom-chips-card
+                chips:
+                  - type: template
+                    entity: binary_sensor.bambugaloo_online
+                    content: AMS
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: none !important;
+                          border: none;
+                          font-size: 4rem !important;
+                        }
+                  - type: spacer
+                  # - type: entity
+                  #   entity: sensor.bambugaloo_ams_1_temperature
+                  - type: entity
+                    entity: sensor.bambuams_humidity_index
+                    icon: mdi:water-opacity
+
+    ####
+
+    # GRID AREA HEADER
+    - type: custom:decluttering-card
+      template: mushroom_view_header
+      view_layout:
+        grid-area: header
+      variables:
+        - room: Entities Requiring Attention
+
+    # GRID AREA CHIPS
+    - type: custom:decluttering-card
+      template: mushroom_chips
+      view_layout:
+        grid-area: chips
+
+    # GRID AREA COL1
+    - type: custom:mod-card
+      view_layout:
+        grid-area: col1
+      card:
+        type: vertical-stack
+        cards:
+          - type: "custom:auto-entities"
+            card:
+              show_header_toggle: false
+              title: Devices with Low Batteries
+              type: entities
+            filter:
+              exclude:
+                - entity_id: "*mbp*"
+                - entity_id: "*iphone*"
+                - state: "unknown"
+                - state: "unavailable"
+                - state: ">20"
+              include:
+                - attributes:
+                    device_class: battery
+                  options:
+                    type: custom:mushroom-entity-card
+                    icon_color: red
+                    card_mod:
+                      style:
+                        .: |
+                          ha-card {
+                            box-shadow: none;
+                            margin:0;
+                            padding: 0;
+                          }
+            show_empty: false
+            sort:
+              method: state
+              numeric: true
+              reverse: false
+          - type: "custom:auto-entities"
+            card:
+              show_header_toggle: false
+              title: Unknown / Unavailable Devices
+              type: entities
+            filter:
+              include:
+                - state: "unknown"
+                - state: "unavailable"
+                  options:
+                    type: custom:mushroom-entity-card
+                    icon_color: red
+                    card_mod:
+                      style:
+                        .: |
+                          ha-card {
+                            box-shadow: none;
+                            margin:0;
+                            padding: 0;
+                          }
+            show_empty: false
+            sort:
+              method: state
+              numeric: true
+              reverse: false
+
+          # - type: custom:auto-entities
+          #   show_empty: false
+          #   card:
+          #     type: entities
+          #     title: Entities not changing
+          #     show_header_toggle: false
+          #   filter:
+          #     include:
+          #       - last_changed: "> 2880"
+
+          # - type: custom:auto-entities
+          #   card:
+          #     type: entities
+          #     title: Inactive Automations?
+          #     show_header_toggle: false
+          #   filter:
+          #     include:
+          #       - domain: automation
+          #         options:
+          #           secondary_info: last_triggered
+          #   sort:
+          #     method: last_triggered
+          #     #count: 20
+          #     reverse: "true"

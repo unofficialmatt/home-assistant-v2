@@ -1,0 +1,310 @@
+input_select:
+  bedroom_four_light_mode:
+    name: Bedroom Four Scene Selector
+    options:
+      - Adaptive
+      - Read
+      - Concentrate
+      - Energise
+      - Relax
+      - Dimmed
+      - Rest
+      - Bright
+      - Nightlight
+    initial: Adaptive
+    icon: mdi:lightbulb
+
+automation:
+  ##############
+  ## PRESENCE ##
+  ##############
+
+  - alias: Bedroom Four - Turn On Lights on Motion Detection
+    id: "bedroom_four_lights_on_motion"
+    description: "Turns on Bedroom Four Lights when motion is detected and it's dark outside"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.bedroom_four_pir_sensor
+        to: "on"
+    condition:
+      condition: and
+      conditions:
+        # 1. The room is either unoccupied or the mmwave sensor was triggered in the last 15 seconds. This is to avoid the cat triggering the lights as best as possible.
+        - condition: template
+          value_template: >
+            {{ is_state('binary_sensor.bedroom_four_occupancy', 'off') or
+               (is_state('binary_sensor.bedroom_four_occupancy', 'on') and
+               (as_timestamp(now()) - as_timestamp(states.binary_sensor.bedroom_four_mmwave_sensor.last_changed)) < 15) }}
+        # 2. It's dark outside
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          below: 35
+        # 3. The lights are off
+        - condition: state
+          entity_id: light.bedroom_four
+          state: "off"
+        # 4. Sleep mode is currently set to Off
+        - condition: template
+          value_template: "{{ float(states('input_number.bedroom_four_bedtime_status')) == 0.0 }}"
+    action:
+      # TODO: Set a sleep mode scene
+      - action: light.turn_on
+        entity_id: light.bedroom_four
+
+  - alias: Bedroom Four - Turn On Lights When Dark and Occupied
+    id: "bedroom_four_lights_on_when_occupied"
+    description: Turns on Bedroom Four Lights when it is consistently dark and the room is already occupied
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: numeric_state
+        entity_id: sensor.sunlight_pct
+        below: 35
+        for:
+          minutes: 5
+    condition:
+      condition: and
+      conditions:
+        # 1. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.bedroom_four_occupancy
+          state: "on"
+        # 2. Lights are off
+        - condition: state
+          entity_id: light.bedroom_four
+          state: "off"
+        # 3. It's dark outside
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          below: 35
+        # 4. Sleep mode is currently set to Off
+        - condition: template
+          value_template: "{{ float(states('input_number.bedroom_four_bedtime_status')) == 0.0 }}"
+    action:
+      # TODO: Set a sleep mode scene
+      - action: light.turn_on
+        entity_id: light.bedroom_four
+
+  - alias: Bedroom Four - Turn Off Lights When Light Enough
+    id: "bedroom_four_lights_off_when_light_enough"
+    description: Turns off Bedroom Four Lights when it's consistently light enough
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: numeric_state
+        entity_id: sensor.sunlight_pct
+        above: 30
+        for:
+          minutes: 5
+    condition:
+      condition: and
+      conditions:
+        # 1. The lights are on
+        - condition: state
+          entity_id: light.bedroom_four
+          state: "on"
+        # 2. The room is occupied
+        - condition: state
+          entity_id: binary_sensor.bedroom_four_occupancy
+          state: "on"
+        # 3. The sunlight is above the threshold
+        - condition: numeric_state
+          entity_id: sensor.sunlight_pct
+          above: 30
+    action:
+      - action: light.turn_off
+        entity_id: light.bedroom_four
+        data:
+          transition: 5
+
+  - alias: Bedroom Four - turn off lights when unoccupied
+    id: "bedroom_four_lights_off_when_unoccupied"
+    description: Turns off Bedroom Four Lights when occupancy is no longer detected
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.bedroom_four_occupancy
+        to: "off"
+        for:
+          minutes: 5
+    condition:
+      # 1. Sleep mode is currently set to Off
+      - condition: template
+        value_template: "{{ float(states('input_number.bedroom_four_bedtime_status')) == 0.0 }}"
+    action:
+      - action: light.turn_off
+        entity_id: light.bedroom_four
+        data:
+          transition: 5
+
+  ##############
+  ##  DIMMER  ##
+  ##############
+  - alias: Bedroom Four - Scene Cycle
+    id: "bedroom_four_scene_cycle"
+    description: "Cycles through Bedroom Four Scenes when Hue Switch 1 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "bedroom_4_dimmer_button"
+          type: short_release
+          subtype: 4
+    action:
+      - action: input_select.select_next
+        entity_id: input_select.bedroom_four_light_mode
+
+  - alias: Bedroom Four - Force Adaptive Lighting
+    id: "bedroom_four_force_adaptive_lighting"
+    description: "Forces Adaptive Lighting in Bedroom Four when Hue Switch 1 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "bedroom_4_dimmer_button"
+          type: long_release
+          subtype: 4
+    action:
+      - action: input_select.select_option
+        entity_id: input_select.bedroom_four_light_mode
+        data:
+          option: Adaptive
+
+  - alias: Bedroom Four - Scene Set
+    id: "bedroom_four_scene_set"
+    description: "Sets the Bedroom Four Scene when the Input Select is changed"
+    trigger:
+      - platform: state
+        entity_id: input_select.bedroom_four_light_mode
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_select.bedroom_four_light_mode
+                state: "Adaptive"
+            sequence:
+              - action: adaptive_lighting.set_manual_control
+                data:
+                  entity_id: switch.adaptive_lighting_bedroom_four
+                  manual_control: false
+
+          - conditions:
+              - condition: template
+                value_template: "{{ not is_state('input_select.bedroom_four_light_mode', 'Adaptive') }}"
+            sequence:
+              - action: scene.turn_on
+                data_template:
+                  entity_id: >
+                    scene.bedroom_four_{{ states('input_select.bedroom_four_light_mode') | lower | replace(' ', '_') }}
+
+  - alias: Bedroom Four - Light Brightness up 5%
+    id: "bedroom_four_light_brightness_up"
+    description: "Turns Bedroom Four Lights brightness up 5% when Hue Switch 2 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "bedroom_4_dimmer_button"
+          type: short_release
+          subtype: 2
+    action:
+      - action: light.turn_on
+        entity_id: light.bedroom_four
+        data:
+          brightness_step_pct: 5
+
+  - alias: Bedroom Four - Light Brightness up continued
+    id: "bedroom_four_light_brightness_up_long"
+    description: "Turns Bedroom Four Lights brightness up 10% incrementally when Hue Switch 2 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "bedroom_4_dimmer_button"
+          type: repeat
+          subtype: 2
+    action:
+      - action: light.turn_on
+        entity_id: light.bedroom_four
+        data:
+          brightness_step_pct: 15
+
+  - alias: Bedroom Four - Light Brightness down 5%
+    id: "bedroom_four_light_brightness_down"
+    description: "Turns Bedroom Four Lights brightness down 5% when Hue Switch 3 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "bedroom_4_dimmer_button"
+          type: short_release
+          subtype: 3
+    condition:
+      - condition: state
+        entity_id: light.bedroom_four
+        state: "on"
+    action:
+      - action: light.turn_on
+        entity_id: light.bedroom_four
+        data:
+          brightness_step_pct: -5
+
+  - alias: Bedroom Four - Light Brightness down continued
+    id: "bedroom_four_light_brightness_down_long"
+    description: "Turns Bedroom Four Lights brightness down 10% incrementally when Hue Switch 3 is pressed and held"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "bedroom_4_dimmer_button"
+          type: repeat
+          subtype: 3
+    condition:
+      - condition: state
+        entity_id: light.bedroom_four
+        state: "on"
+    action:
+      - action: light.turn_on
+        entity_id: light.bedroom_four
+        data:
+          brightness_step_pct: -15
+
+  - alias: Bedroom Four - Toggle lights
+    id: "bedroom_four_light_toggle"
+    description: "Toggles Bedroom Four Lights when Hue Switch 1 is pressed"
+    trigger:
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "bedroom_4_dimmer_button"
+          type: short_release
+          subtype: 1
+      - platform: event
+        event_type: hue_event
+        event_data:
+          id: "bedroom_4_dimmer_button"
+          type: long_release
+          subtype: 1
+    condition:
+      - condition: state
+        entity_id: light.bedroom_four
+        state: "on"
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: light.bedroom_four
+                state: "on"
+            sequence:
+              - action: light.turn_off
+                entity_id: light.bedroom_four
+                data:
+                  transition: 2
+          - conditions:
+              - condition: state
+                entity_id: light.bedroom_four
+                state: "off"
+            sequence:
+              - action: light.turn_on
+                entity_id: light.bedroom_four
+                data:
+                  transition: 2

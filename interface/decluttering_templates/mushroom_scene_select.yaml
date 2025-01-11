@@ -1,0 +1,16 @@
+mushroom_scene_select:
+  card:
+    type: custom:mushroom-select-card
+    entity: input_select.[[room]]_light_mode
+    icon: mdi:blur
+    icon_color: white
+    secondary_info: none
+    fill_container: false
+    tap_action:
+      action: none
+    hold_action:
+      action: none
+    double_tap_action:
+      action: none
+    name: "Select Scene:"
+    layout: horizontal
